@@ -1,9 +1,9 @@
 module.exports = {
   roots: ["<rootDir>/test", "<rootDir>/src"],
-  testMatch: ["**/__tests__/**/*.+(ts|tsx|js)", "**/?(*.)+(spec|test).+(ts|tsx|js)"],
-  testEnvironment: "jsdom",
+  testMatch: ["**/__tests__/**/*.+(ts|js)", "**/?(*.)+(spec|test).+(ts|js)"],
+  testEnvironment: "node",
   transform: {
-    "^.+\\.(ts|tsx)$": [
+    "^.+\\.(ts)$": [
       "ts-jest",
       {
         tsconfig: "tsconfig.json",

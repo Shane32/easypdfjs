@@ -1,24 +1,24 @@
-const path = require('path')
+const path = require("path");
 
 module.exports = {
-  mode: 'production',
-  entry: './src/index.ts',
+  mode: "production",
+  entry: "./src/index.ts",
   output: {
-    path: path.resolve(__dirname, '../dist/umd'),
-    filename: 'index.js',
-    library: 'exampleTypescriptPackage',
-    libraryTarget: 'umd',
-    globalObject: 'this',
+    path: path.resolve(__dirname, "../dist/umd"),
+    filename: "index.js",
+    library: "easypdfjs",
+    libraryTarget: "umd",
+    globalObject: "this",
   },
   module: {
     rules: [
       {
-        test: /\.ts(x*)?$/,
+        test: /\.ts$/,
         exclude: /node_modules/,
         use: {
-          loader: 'ts-loader',
+          loader: "ts-loader",
           options: {
-            configFile: 'config/tsconfig.umd.json',
+            configFile: "config/tsconfig.umd.json",
           },
         },
       },
@@ -26,10 +26,10 @@ module.exports = {
         test: /\.(png|jpg|gif)$/,
         use: [
           {
-            loader: 'file-loader',
+            loader: "file-loader",
             options: {
-              outputPath: 'images/',
-              name: '[name][hash].[ext]',
+              outputPath: "images/",
+              name: "[name][hash].[ext]",
             },
           },
         ],
@@ -39,7 +39,7 @@ module.exports = {
         exclude: /fonts/, // dont want svg fonts from fonts folder to be included
         use: [
           {
-            loader: 'svg-url-loader',
+            loader: "svg-url-loader",
             options: {
               noquotes: true,
             },
@@ -48,24 +48,23 @@ module.exports = {
       },
       {
         test: /.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
-        exclude: /images/,  // dont want svg images from image folder to be included
+        exclude: /images/, // dont want svg images from image folder to be included
         use: [
           {
-            loader: 'file-loader',
+            loader: "file-loader",
             options: {
-              outputPath: 'fonts/',
-              name: '[name][hash].[ext]',
+              outputPath: "fonts/",
+              name: "[name][hash].[ext]",
             },
           },
         ],
-      }
+      },
     ],
   },
   resolve: {
-    extensions: ['.ts', '.js', '.tsx', '.jsx'],
+    extensions: [".ts", ".js"],
   },
   externals: {
-    'react': 'React',
-    'react-dom': 'ReactDOM'
+    "pdf-lib": "PDFLib",
   },
-}
+};
