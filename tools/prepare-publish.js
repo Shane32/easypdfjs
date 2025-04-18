@@ -22,6 +22,7 @@ const allowedFields = [
   "module",
   "umd:main",
   "types",
+  "sideEffects",
   "publishConfig",
   "files",
   "keywords",
