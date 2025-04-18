@@ -1,5 +1,5 @@
 ﻿{
-  "extends": ["react-app"],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   //not supported by VS -- so cannot create naming rules by argument type (e.g. special rules for booleans)
   //"parserOptions": {
   //    "project": "./tsconfig.json"
@@ -89,16 +89,11 @@ to get this working with Visual Studio 2019 / 2022:
   - enable eslint in VS
     - Tools > Options > Text Editor > JavaScript/TypeScript > Linting > check 'enable ESLint' and 'lint all files'
   - go to C:\Users\{username}\AppData\Local\Microsoft\TypeScript\ESLint
-    - npm install eslint-config-react-app@6
-    - npm install eslint-plugin-flowtype@5
     - npm install eslint-plugin-import@2
-    - npm install eslint-plugin-jsx-a11y@6
-    - npm install eslint-plugin-react@7
-    - npm install eslint-plugin-react-hooks@4
     - npm install @typescript-eslint/eslint-plugin@4
     - npm install @typescript-eslint/parser@4
 
     or to install all at once:
 
-    npm install --no-save eslint-plugin-flowtype@5 eslint-plugin-import@2 eslint-plugin-jsx-a11y@6 eslint-plugin-react@7 eslint-plugin-react@7 eslint-plugin-react-hooks@4 @typescript-eslint/eslint-plugin@4 @typescript-eslint/parser@4
+    npm install --no-save eslint-plugin-import@2 @typescript-eslint/eslint-plugin@4 @typescript-eslint/parser@4
 */
