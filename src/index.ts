@@ -1,2 +1,2 @@
 export { EasyPdf } from "./EasyPdf";
-export { PathState } from "./PathState";
+export { ScaleMode } from "./ScaleMode";
