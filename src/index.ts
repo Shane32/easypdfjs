@@ -1,4 +1,2 @@
-import { Num } from "./Num";
-
-// Export the main classes and functions
-export { Num };
+export { EasyPdf } from "./EasyPdf";
+export { ScaleMode } from "./ScaleMode";
