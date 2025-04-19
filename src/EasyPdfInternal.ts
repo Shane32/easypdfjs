@@ -370,6 +370,9 @@ export class EasyPdfInternal extends EasyPdf {
       yCoord = y;
     }
 
+    if (!Number.isFinite(x) || !Number.isFinite(yCoord)) {
+      throw new Error("Coordinates must be finite numbers");
+    }
     this.positionInternal = {
       x: this.toPoints(x),
       y: this.toPoints(yCoord),
@@ -402,6 +405,9 @@ export class EasyPdfInternal extends EasyPdf {
       yCoord = y;
     }
 
+    if (!Number.isFinite(x) || !Number.isFinite(yCoord)) {
+      throw new Error("Coordinates must be finite numbers");
+    }
     this.positionInternal.x += this.toPoints(x);
     this.positionInternal.y += this.toPoints(yCoord);
 
