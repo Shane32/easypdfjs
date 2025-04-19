@@ -1,6 +1,5 @@
 import { PDFDocument, PDFPage } from "pdf-lib";
 import { ScaleMode } from "./ScaleMode";
-import { EasyPdfInternal } from "./EasyPdfInternal";
 
 /**
  * EasyPdf: A high-level, user-friendly PDF document creation library
@@ -21,8 +20,10 @@ export abstract class EasyPdf {
    * @returns A promise resolving to an EasyPdf instance
    */
   static async create(options?: { scaleMode?: ScaleMode }): Promise<EasyPdf> {
+    // Dynamically import to break circular dependency
+    const imported = await import("./EasyPdfInternal");
     const pdf = await PDFDocument.create();
-    return new EasyPdfInternal(pdf, options);
+    return new imported.EasyPdfInternal(pdf, options);
   }
 
   /** Gets the current scale mode */
