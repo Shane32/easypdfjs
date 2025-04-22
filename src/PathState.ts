@@ -209,6 +209,9 @@ export class PathState {
       return;
     }
 
+    // Note: do NOT call checkLineStyleChanged() here, as it occurs in lineTo and similar methods, and we if the
+    // style HAS changed, we want to be able to draw the current path with the old style.
+
     // Generate path operators and add stroke operator
     page.pushOperators(...this.generatePathOperators(), pdfStroke());
   }
