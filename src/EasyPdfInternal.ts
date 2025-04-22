@@ -1,6 +1,11 @@
-import { PDFDocument, PDFPage } from "pdf-lib";
+import { PDFDocument, PDFPage, concatTransformationMatrix } from "pdf-lib";
 import { EasyPdf } from "./EasyPdf";
 import { ScaleMode } from "./ScaleMode";
+import { LineStyle } from "./LineStyle";
+import { parseCoordinates } from "./utils/CoordinateUtils";
+import { applyLineStyle } from "./utils/LineStyleUtils";
+import { PathState } from "./PathState";
+import { RectangleOptions, drawRectangle, drawEllipse, cornerTo as shapeUtilsCornerTo } from "./utils/ShapeUtils";
 
 /**
  * Internal implementation of EasyPdf
@@ -18,14 +23,28 @@ export class EasyPdfInternal extends EasyPdf {
   /** Current scale mode for dimension calculations */
   private _scaleMode: ScaleMode;
 
+  /** Current line style for drawing operations */
+  private _lineStyle: LineStyle;
+
+  /** Last line style that was applied to the PDF page */
+  private _lastSetLineStyle: LineStyle | null = null;
+
+  /** Path state for drawing operations */
+  readonly pathState: PathState;
+
   /** Total page dimensions in points */
-  pageSizeInternal: { width: number; height: number } = { width: 0, height: 0 };
+  pageSizeInternal: { readonly width: number; readonly height: number } = { width: 0, height: 0 };
 
   /** Page margins in points */
-  marginsInternal: { left: number; top: number; bottom: number; right: number } = { left: 0, top: 0, bottom: 0, right: 0 };
+  marginsInternal: { readonly left: number; readonly top: number; readonly bottom: number; readonly right: number } = {
+    left: 0,
+    top: 0,
+    bottom: 0,
+    right: 0,
+  };
 
   /** Current drawing position in points */
-  positionInternal: { x: number; y: number } = { x: 0, y: 0 };
+  positionInternal: { readonly x: number; readonly y: number } = { x: 0, y: 0 };
 
   /**
    * Metadata for the PDF document
@@ -42,15 +61,13 @@ export class EasyPdfInternal extends EasyPdf {
     producer?: string;
   };
 
-  /**
-   * Private constructor to enforce creation through static method
-   * @param pdf - The underlying PDF document
-   * @param options - Optional configuration for the PDF
-   */
+  /** Private constructor to enforce creation through static method */
   constructor(pdf: PDFDocument, options?: { scaleMode?: ScaleMode }) {
     super();
     this._pdf = pdf;
     this._scaleMode = options?.scaleMode ?? ScaleMode.Points;
+    this._lineStyle = new LineStyle();
+    this.pathState = new PathState(this);
 
     const now = new Date();
     this._metadata = {
@@ -59,21 +76,28 @@ export class EasyPdfInternal extends EasyPdf {
     };
   }
 
-  /**
-   * Ensures a page exists before performing operations
-   * @throws {Error} If no page has been created
-   */
+  /** Gets the current line style */
+  get lineStyle(): LineStyle {
+    return this._lineStyle;
+  }
+
+  /** Applies the current line style settings to the PDF page */
+  setLineStyle(): this {
+    this.ensurePageExists();
+
+    this._lastSetLineStyle = applyLineStyle(this.pdfPage, this._lineStyle, this._lastSetLineStyle, this._pdf);
+
+    return this;
+  }
+
+  /** Ensures a page exists before performing operations */
   ensurePageExists(): void {
     if (!this._pdfPageInternal) {
       throw new Error("No page has been created. Use newPage() first.");
     }
   }
 
-  /**
-   * Converts a value from the current scale mode to points
-   * @param value - The value to convert
-   * @returns The value converted to points
-   */
+  /** Converts a value from the current scale mode to points */
   toPoints(value: number): number {
     switch (this._scaleMode) {
       case ScaleMode.Hundredths:
@@ -86,11 +110,15 @@ export class EasyPdfInternal extends EasyPdf {
     }
   }
 
-  /**
-   * Converts a value from points to the current scale mode
-   * @param value - The value in points to convert
-   * @returns The value converted to the current scale mode
-   */
+  /** Converts an object with x and y coordinates from the current scale mode to points */
+  toPointsObj(obj: { x: number; y: number }): { x: number; y: number } {
+    return {
+      x: this.toPoints(obj.x),
+      y: this.toPoints(obj.y),
+    };
+  }
+
+  /** Converts a value from points to the current scale mode */
   fromPoints(value: number): number {
     switch (this._scaleMode) {
       case ScaleMode.Hundredths:
@@ -108,10 +136,7 @@ export class EasyPdfInternal extends EasyPdf {
     return this._scaleMode;
   }
 
-  /**
-   * Sets the scale mode with validation
-   * @throws {Error} If an invalid scale mode is provided
-   */
+  /** Sets the scale mode with validation */
   set scaleMode(mode: ScaleMode) {
     if (!Object.values(ScaleMode).includes(mode)) {
       throw new Error(`Invalid scale mode. Must be one of: ${Object.values(ScaleMode).join(", ")}`);
@@ -119,10 +144,7 @@ export class EasyPdfInternal extends EasyPdf {
     this._scaleMode = mode;
   }
 
-  /**
-   * Gets the total page size
-   * @throws {Error} If no page exists
-   */
+  /** Gets the total page size */
   get pageSize(): { readonly width: number; readonly height: number } {
     this.ensurePageExists();
     return {
@@ -131,10 +153,7 @@ export class EasyPdfInternal extends EasyPdf {
     };
   }
 
-  /**
-   * Calculates the page size excluding margins
-   * @throws {Error} If no page exists
-   */
+  /** Calculates the page size excluding margins */
   get size(): { readonly width: number; readonly height: number } {
     this.ensurePageExists();
     return {
@@ -143,10 +162,7 @@ export class EasyPdfInternal extends EasyPdf {
     };
   }
 
-  /**
-   * Gets the page margins
-   * @throws {Error} If no page exists
-   */
+  /** Gets the page margins */
   get margins(): { readonly left: number; readonly top: number; readonly bottom: number; readonly right: number } {
     this.ensurePageExists();
     return {
@@ -167,10 +183,7 @@ export class EasyPdfInternal extends EasyPdf {
     };
   }
 
-  /**
-   * Gets the current drawing position
-   * @throws {Error} If no page exists
-   */
+  /** Gets the current drawing position */
   get position(): { readonly x: number; readonly y: number } {
     this.ensurePageExists();
     return {
@@ -194,7 +207,10 @@ export class EasyPdfInternal extends EasyPdf {
 
   set x(value: number) {
     this.ensurePageExists();
-    this.positionInternal.x = this.toPoints(value);
+    this.positionInternal = {
+      x: this.toPoints(value),
+      y: this.positionInternal.y,
+    };
   }
 
   get y(): number {
@@ -204,7 +220,10 @@ export class EasyPdfInternal extends EasyPdf {
 
   set y(value: number) {
     this.ensurePageExists();
-    this.positionInternal.y = this.toPoints(value);
+    this.positionInternal = {
+      x: this.positionInternal.x,
+      y: this.toPoints(value),
+    };
   }
 
   /** Gets the current metadata */
@@ -219,7 +238,6 @@ export class EasyPdfInternal extends EasyPdf {
 
   /**
    * Creates a new page with specified dimensions and optional margins
-   * @param options - Page creation options
    * @remarks Resets the drawing position to the top-left of the new page
    */
   newPage(options: {
@@ -231,7 +249,12 @@ export class EasyPdfInternal extends EasyPdf {
     topMargin?: number;
     bottomMargin?: number;
   }): void {
-    // Convert all measurements to points
+    if (this._pdfPageInternal) {
+      // Ensure any existing path is finished before creating a new page
+      this.finishLine();
+    }
+
+    // Convert width and height to points
     const width = this.toPoints(options.width);
     const height = this.toPoints(options.height);
 
@@ -242,15 +265,24 @@ export class EasyPdfInternal extends EasyPdf {
     // Create new page
     this.pdfPage = this._pdf.addPage([pageWidth, pageHeight]);
 
+    // Concatenate the current transformation matrix (CTM) with a new matrix that translates the origin to the
+    // specified margin location and flips the y-axis orientation.  This is necessary so that (0, 0) represents
+    // the top-left corner of the page rather than the bottom-left corner.
+    this.pdfPage.pushOperators(concatTransformationMatrix(1, 0, 0, -1, 0, pageHeight));
+
     // Update page and size properties
     this.pageSizeInternal = { width: pageWidth, height: pageHeight };
 
     // Set margins (convert to points if needed)
+    const leftMargin = options.leftMargin ?? 0;
+    const rightMargin = options.rightMargin ?? leftMargin;
+    const topMargin = options.topMargin ?? 0;
+    const bottomMargin = options.bottomMargin ?? topMargin;
     this.marginsInternal = {
-      left: options.leftMargin ? this.toPoints(options.leftMargin) : 36,
-      right: options.rightMargin ? this.toPoints(options.rightMargin) : 36,
-      top: options.topMargin ? this.toPoints(options.topMargin) : 36,
-      bottom: options.bottomMargin ? this.toPoints(options.bottomMargin) : 36,
+      left: this.toPoints(leftMargin),
+      right: this.toPoints(rightMargin),
+      top: this.toPoints(topMargin),
+      bottom: this.toPoints(bottomMargin),
     };
 
     // Reset position to top-left of new page
@@ -261,44 +293,7 @@ export class EasyPdfInternal extends EasyPdf {
   }
 
   /**
-   * Draws a plus/cross sign at the current position
-   * @param size - Total width and height of the plus sign
-   * @throws {Error} If no page exists
-   *
-   * @remarks
-   * Future improvements could include:
-   * - Color customization
-   * - Line thickness options
-   * - Different cross/plus styles
-   */
-  plus(size: number): void {
-    // Ensure page exists
-    this.ensurePageExists();
-
-    // Convert size to points
-    const pointSize = this.toPoints(size);
-    const halfSize = pointSize / 2;
-
-    // Draw a plus/cross centered at current position
-    const { x, y } = this.positionInternal;
-
-    this.pdfPage.drawLine({
-      start: { x: x - halfSize, y },
-      end: { x: x + halfSize, y },
-      thickness: 1,
-    });
-
-    this.pdfPage.drawLine({
-      start: { x, y: y + halfSize },
-      end: { x, y: y - halfSize },
-      thickness: 1,
-    });
-  }
-
-  /**
    * Saves the PDF document with all set metadata
-   * @returns A promise resolving to the PDF bytes
-   * @throws {Error} If no page exists
    *
    * @remarks
    * Only non-empty metadata fields are set to avoid overwriting
@@ -321,23 +316,12 @@ export class EasyPdfInternal extends EasyPdf {
     return this._pdf.save();
   }
 
-  /**
-   * Gets the underlying PDF document for advanced usage
-   *
-   * @remarks
-   * Use with caution - bypasses the abstraction layer
-   */
+  /** Gets the underlying PDF document for advanced usage */
   get pdfDocument(): PDFDocument {
     return this._pdf;
   }
 
-  /**
-   * Gets the underlying PDF page for advanced usage
-   *
-   * @remarks
-   * Use with caution - bypasses the abstraction layer
-   * @throws {Error} If no page exists
-   */
+  /** Gets the underlying PDF page for advanced usage */
   get pdfPage(): PDFPage {
     this.ensurePageExists();
     return this._pdfPageInternal!;
@@ -346,71 +330,127 @@ export class EasyPdfInternal extends EasyPdf {
     this._pdfPageInternal = value;
   }
 
-  /**
-   * Moves the drawing position to a specific coordinate
-   * @param xOrCoords - Either the x coordinate or an object with x and y coordinates
-   * @param y - The y coordinate (required if first parameter is a number)
-   * @throws {Error} If no page exists
-   * @returns The current EasyPdf instance for method chaining
-   */
+  /** Moves the drawing position to a specific coordinate */
   moveTo(xOrCoords: number | { x: number; y: number }, y?: number): this {
     this.ensurePageExists();
 
-    let x: number;
-    let yCoord: number;
+    this.positionInternal = this.toPointsObj(parseCoordinates(xOrCoords, y));
 
-    if (typeof xOrCoords === "object") {
-      x = xOrCoords.x;
-      yCoord = xOrCoords.y;
-    } else {
-      x = xOrCoords;
-      if (y === undefined) {
-        throw new Error("Y coordinate must be provided when using separate x and y arguments");
-      }
-      yCoord = y;
-    }
+    return this;
+  }
 
-    if (!Number.isFinite(x) || !Number.isFinite(yCoord)) {
-      throw new Error("Coordinates must be finite numbers");
-    }
+  /** Offsets the drawing position by the specified coordinates */
+  offsetTo(xOrCoords: number | { x: number; y: number }, y?: number): this {
+    this.ensurePageExists();
+
+    const coords = parseCoordinates(xOrCoords, y);
     this.positionInternal = {
-      x: this.toPoints(x),
-      y: this.toPoints(yCoord),
+      x: this.positionInternal.x + this.toPoints(coords.x),
+      y: this.positionInternal.y + this.toPoints(coords.y),
     };
 
     return this;
   }
 
-  /**
-   * Offsets the drawing position by the specified coordinates
-   * @param xOrCoords - Either the x offset or an object with x and y offsets
-   * @param y - The y offset (required if first parameter is a number)
-   * @throws {Error} If no page exists
-   * @returns The current EasyPdf instance for method chaining
-   */
-  offsetTo(xOrCoords: number | { x: number; y: number }, y?: number): this {
+  /** Adds a line segment from the current position to the specified coordinates */
+  lineTo(xOrCoords: number | { x: number; y: number }, y?: number): this {
     this.ensurePageExists();
 
-    let x: number;
-    let yCoord: number;
+    const pointCoords = this.toPointsObj(parseCoordinates(xOrCoords, y));
+    this.pathState.lineTo(pointCoords);
+    this.positionInternal = pointCoords;
 
-    if (typeof xOrCoords === "object") {
-      x = xOrCoords.x;
-      yCoord = xOrCoords.y;
+    return this;
+  }
+
+  /** Adds a quadratic curve segment from the current position to the specified end point */
+  quadraticCurveTo(controlPoint: { x: number; y: number }, end: { x: number; y: number }): this {
+    this.ensurePageExists();
+
+    const endInPoints = this.toPointsObj(end);
+    this.pathState.quadraticCurveTo(this.toPointsObj(controlPoint), endInPoints);
+    this.positionInternal = endInPoints;
+
+    return this;
+  }
+
+  /** Adds a cubic Bezier curve segment from the current position to the specified end point */
+  bezierCurveTo(controlPoint1: { x: number; y: number }, controlPoint2: { x: number; y: number }, end: { x: number; y: number }): this {
+    this.ensurePageExists();
+
+    const endInPoints = this.toPointsObj(end);
+    this.pathState.bezierCurveTo(this.toPointsObj(controlPoint1), this.toPointsObj(controlPoint2), endInPoints);
+    this.positionInternal = endInPoints;
+
+    return this;
+  }
+
+  /** Internal method for drawing rectangles */
+  rectangleInternal(width: number, height: number): this {
+    this.ensurePageExists();
+    this.pathState.rectangle(this.positionInternal.x, this.positionInternal.y, this.toPoints(width), this.toPoints(height));
+    return this;
+  }
+
+  /** Finishes the current line drawing operation */
+  finishLine(): this {
+    this.ensurePageExists();
+
+    this.pathState.drawLine();
+    this.setLineStyle(); // Ensures the line style is applied even if no segments are drawn
+
+    return this;
+  }
+
+  /**
+   * Completes and draws a polygon from the current path and
+   * sets the current position to the start of the polygon
+   */
+  finishPolygon(border: boolean, fill: boolean, eoFill: boolean = false): this {
+    this.ensurePageExists();
+
+    this.pathState.drawPolygon(border, fill, eoFill);
+    this.setLineStyle(); // Ensures the line style is applied even if no segments are drawn
+
+    return this;
+  }
+
+  /** Draws an circle at the current position */
+  circle(radius: number, border = true, fill = false): this {
+    return this.ellipse(radius, radius, border, fill);
+  }
+
+  /** Draws an ellipse at the current position */
+  ellipse(radiusX: number, radiusY: number, border = true, fill = false): this {
+    this.ensurePageExists();
+
+    drawEllipse(this, radiusX, radiusY, border, fill);
+
+    return this;
+  }
+
+  /** Draws a rectangle at the current drawing position */
+  rectangle(widthOrOptions: number | RectangleOptions, height?: number, borderRadius: number = 0, border = true, fill = false): this {
+    this.ensurePageExists();
+
+    if (typeof widthOrOptions === "object") {
+      drawRectangle(this, widthOrOptions);
     } else {
-      x = xOrCoords;
-      if (y === undefined) {
-        throw new Error("Y coordinate must be provided when using separate x and y arguments");
-      }
-      yCoord = y;
+      drawRectangle(this, {
+        width: widthOrOptions,
+        height: height ?? widthOrOptions,
+        borderRadius,
+        border,
+        fill,
+      });
     }
+    return this;
+  }
 
-    if (!Number.isFinite(x) || !Number.isFinite(yCoord)) {
-      throw new Error("Coordinates must be finite numbers");
-    }
-    this.positionInternal.x += this.toPoints(x);
-    this.positionInternal.y += this.toPoints(yCoord);
-
+  /** Adds a corner to the current path with optional bulge */
+  cornerTo(offsetX: number, offsetY: number, fromSide = false, bulgeHorizontal?: number, bulgeVertical?: number): this {
+    this.ensurePageExists();
+    shapeUtilsCornerTo(this, offsetX, offsetY, fromSide, bulgeHorizontal, bulgeVertical);
     return this;
   }
 }
