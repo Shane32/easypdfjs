@@ -10,6 +10,7 @@ const DefaultBulge = 0.5522847498307936;
  * Draws an ellipse centered at the specified position with specified radiuses
  */
 export function drawEllipse(easyPdf: EasyPdfInternal, radiusX: number, radiusY: number, border: boolean, fill: boolean): void {
+  easyPdf.finishLine();
   if (!(border || fill)) return;
 
   // Approximate ellipse with Bezier curves
@@ -20,7 +21,6 @@ export function drawEllipse(easyPdf: EasyPdfInternal, radiusX: number, radiusY: 
   const oy = radiusY * kappa;
 
   // Use path state to draw the ellipse
-  easyPdf.finishLine();
   easyPdf.moveTo(x - radiusX, y);
   easyPdf.bezierCurveTo({ x: x - radiusX, y: y - oy }, { x: x - ox, y: y - radiusY }, { x: x, y: y - radiusY });
   easyPdf.bezierCurveTo({ x: x + ox, y: y - radiusY }, { x: x + radiusX, y: y - oy }, { x: x + radiusX, y: y });
@@ -46,12 +46,12 @@ export interface RectangleOptions {
  * Draws a rectangle at the specified position with options
  */
 export function drawRectangle(easyPdf: EasyPdfInternal, options: RectangleOptions): void {
+  // Ensure there is no existing path
+  easyPdf.finishLine();
+
   if (!(options.border || options.fill)) return;
 
   const { width, height, borderRadius = 0, fill = false, border = true, inset = 0 } = options;
-
-  // Ensure there is no existing path
-  easyPdf.finishLine();
 
   // If no border radius, use simple rectangle
   if (borderRadius === 0) {
