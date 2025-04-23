@@ -34,6 +34,7 @@ export abstract class EasyPdf {
 
   /** Gets the current line style */
   abstract get lineStyle(): LineStyle;
+  abstract set lineStyle(value: LineStyle);
 
   /**
    * Gets the total page size
@@ -264,14 +265,19 @@ export abstract class EasyPdf {
   abstract cornerTo(offsetX: number, offsetY: number, fromSide?: boolean, bulgeHorizontal?: number, bulgeVertical?: number): this;
 
   /**
-   * Gets the color used for printing text, lines and borders.
+   * Gets the color used for printing text, lines and borders
    */
   abstract get foreColor(): Color;
   abstract set foreColor(value: Color);
 
   /**
-   * Gets the color used for filling polygons, circles and ellipses.
+   * Gets the color used for filling polygons, circles and ellipses
    */
-  abstract get backColor(): Color;
-  abstract set backColor(value: Color);
+  abstract get fillColor(): Color;
+  abstract set fillColor(value: Color);
+
+  /**
+   * Saves the current drawing state and returns a function that can be used to restore it
+   */
+  abstract saveState(): () => void;
 }

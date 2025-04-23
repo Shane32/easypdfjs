@@ -1,7 +1,7 @@
 import { Color, PDFDocument, PDFPage, concatTransformationMatrix, grayscale, setFillingColor, setStrokingColor } from "pdf-lib";
 import { EasyPdf } from "./EasyPdf";
 import { ScaleMode } from "./ScaleMode";
-import { LineStyle } from "./LineStyle";
+import { cloneLineStyle, LineStyle } from "./LineStyle";
 import { parseCoordinates } from "./utils/CoordinateUtils";
 import { applyLineStyle } from "./utils/LineStyleUtils";
 import { PathState } from "./PathState";
@@ -33,7 +33,7 @@ export class EasyPdfInternal extends EasyPdf {
   private _foreColor: Color = grayscale(0);
 
   /** Current fill color */
-  private _backColor: Color = grayscale(0);
+  private _fillColor: Color = grayscale(0);
 
   /** Path state for drawing operations */
   readonly pathState: PathState;
@@ -85,6 +85,9 @@ export class EasyPdfInternal extends EasyPdf {
   /** Gets the current line style */
   get lineStyle(): LineStyle {
     return this._lineStyle;
+  }
+  set lineStyle(value: LineStyle) {
+    this._lineStyle = value;
   }
 
   /** Applies the current line style settings to the PDF page */
@@ -494,13 +497,32 @@ export class EasyPdfInternal extends EasyPdf {
     this._foreColor = value;
   }
 
-  get backColor(): Color {
-    return this._backColor;
+  get fillColor(): Color {
+    return this._fillColor;
   }
 
-  set backColor(value: Color) {
+  set fillColor(value: Color) {
     this.finishLine();
     this.pdfPage.pushOperators(setFillingColor(value));
-    this._backColor = value;
+    this._fillColor = value;
+  }
+
+  /** Saves the current drawing state and returns function that can be used to restore it */
+  saveState(): () => void {
+    this.finishLine();
+    const scaleMode = this.scaleMode;
+    const position = this.position;
+    const foreColor = this.foreColor;
+    const fillColor = this.fillColor;
+    const lineStyle = cloneLineStyle(this.lineStyle);
+    const margins = this.margins;
+    return () => {
+      this.scaleMode = scaleMode;
+      this.position = position;
+      this.foreColor = foreColor;
+      this.fillColor = fillColor;
+      this.lineStyle = lineStyle;
+      this.margins = margins;
+    };
   }
 }
