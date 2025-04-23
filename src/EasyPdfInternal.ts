@@ -29,6 +29,12 @@ export class EasyPdfInternal extends EasyPdf {
   /** Last line style that was applied to the PDF page */
   private _lastSetLineStyle: LineStyle | null = null;
 
+  /** Current stroke color */
+  private _foreColor: Color = grayscale(0);
+
+  /** Current fill color */
+  private _backColor: Color = grayscale(0);
+
   /** Path state for drawing operations */
   readonly pathState: PathState;
 
@@ -477,9 +483,6 @@ export class EasyPdfInternal extends EasyPdf {
     shapeUtilsCornerTo(this, offsetX, offsetY, fromSide, bulgeHorizontal, bulgeVertical);
     return this;
   }
-
-  private _foreColor: Color = grayscale(1);
-  private _backColor: Color = grayscale(1);
 
   get foreColor(): Color {
     return this._foreColor;
