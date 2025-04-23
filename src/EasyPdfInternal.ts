@@ -1,4 +1,4 @@
-import { Color, PDFDocument, PDFPage, concatTransformationMatrix, grayscale, setFillingColor, setStrokingColor } from "pdf-lib";
+import { Color, PDFDocument, PDFPage, PDFImage, concatTransformationMatrix, grayscale, setFillingColor, setStrokingColor } from "pdf-lib";
 import { EasyPdf } from "./EasyPdf";
 import { ScaleMode } from "./ScaleMode";
 import { cloneLineStyle, LineStyle } from "./LineStyle";
@@ -6,6 +6,8 @@ import { parseCoordinates } from "./utils/CoordinateUtils";
 import { applyLineStyle } from "./utils/LineStyleUtils";
 import { PathState } from "./PathState";
 import { RectangleOptions, drawRectangle, drawEllipse, cornerTo as shapeUtilsCornerTo } from "./utils/ShapeUtils";
+import { PictureAlignment } from "./PictureAlignment";
+import { paintPicture } from "./utils/PictureUtils";
 
 /**
  * Internal implementation of EasyPdf
@@ -34,6 +36,9 @@ export class EasyPdfInternal extends EasyPdf {
 
   /** Current fill color */
   private _fillColor: Color = grayscale(0);
+
+  /** Current picture alignment */
+  private _pictureAlignment: PictureAlignment = PictureAlignment.LeftTop;
 
   /** Path state for drawing operations */
   readonly pathState: PathState;
@@ -507,7 +512,7 @@ export class EasyPdfInternal extends EasyPdf {
     this._fillColor = value;
   }
 
-  /** Saves the current drawing state and returns function that can be used to restore it */
+  /** Saves the current drawing state and returns a function that can be used to restore it */
   saveState(): () => void {
     this.finishLine();
     const scaleMode = this.scaleMode;
@@ -524,5 +529,22 @@ export class EasyPdfInternal extends EasyPdf {
       this.lineStyle = lineStyle;
       this.margins = margins;
     };
+  }
+
+  /** Gets the current picture alignment */
+  get pictureAlignment(): PictureAlignment {
+    return this._pictureAlignment;
+  }
+
+  /** Sets the current picture alignment */
+  set pictureAlignment(value: PictureAlignment) {
+    this._pictureAlignment = value;
+  }
+
+  /** Paints a picture at the current drawing position */
+  paintPicture(image: PDFImage, options: { dpi?: number; width?: number; height?: number }): this {
+    this.finishLine();
+    paintPicture(this, image, options);
+    return this;
   }
 }

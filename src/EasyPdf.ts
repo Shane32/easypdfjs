@@ -1,7 +1,8 @@
-import { Color, PDFDocument, PDFPage } from "pdf-lib";
+import { Color, PDFDocument, PDFPage, PDFImage } from "pdf-lib";
 import { ScaleMode } from "./ScaleMode";
 import { LineStyle } from "./LineStyle";
 import { RectangleOptions } from "./utils/ShapeUtils";
+import { PictureAlignment } from "./PictureAlignment";
 
 /**
  * EasyPdf: A high-level, user-friendly PDF document creation library
@@ -280,4 +281,20 @@ export abstract class EasyPdf {
    * Saves the current drawing state and returns a function that can be used to restore it
    */
   abstract saveState(): () => void;
+
+  /** Gets or sets the current picture alignment */
+  abstract get pictureAlignment(): PictureAlignment;
+  abstract set pictureAlignment(value: PictureAlignment);
+
+  /**
+   * Paints a picture at the current drawing position
+   * @param image - The PDFImage to paint
+   * @param options - Options for painting the image
+   * @param options.dpi - Optional dots per inch for scaling (default: 96)
+   * @param options.width - Optional width of the image (will scale proportionally if only width is provided)
+   * @param options.height - Optional height of the image (will scale proportionally if only height is provided)
+   * @throws {Error} If no page exists
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract paintPicture(image: PDFImage, options: { dpi?: number; width?: number; height?: number }): this;
 }
