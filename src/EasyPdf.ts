@@ -1,4 +1,4 @@
-import { PDFDocument, PDFPage } from "pdf-lib";
+import { Color, PDFDocument, PDFPage } from "pdf-lib";
 import { ScaleMode } from "./ScaleMode";
 import { LineStyle } from "./LineStyle";
 import { RectangleOptions } from "./utils/ShapeUtils";
@@ -262,4 +262,16 @@ export abstract class EasyPdf {
    * @returns The current EasyPdf instance for method chaining
    */
   abstract cornerTo(offsetX: number, offsetY: number, fromSide?: boolean, bulgeHorizontal?: number, bulgeVertical?: number): this;
+
+  /**
+   * Gets the color used for printing text, lines and borders.
+   */
+  abstract get foreColor(): Color;
+  abstract set foreColor(value: Color);
+
+  /**
+   * Gets the color used for filling polygons, circles and ellipses.
+   */
+  abstract get backColor(): Color;
+  abstract set backColor(value: Color);
 }

@@ -1,4 +1,4 @@
-import { PDFDocument, PDFPage, concatTransformationMatrix } from "pdf-lib";
+import { Color, PDFDocument, PDFPage, concatTransformationMatrix, grayscale, setFillingColor, setStrokingColor } from "pdf-lib";
 import { EasyPdf } from "./EasyPdf";
 import { ScaleMode } from "./ScaleMode";
 import { LineStyle } from "./LineStyle";
@@ -28,6 +28,12 @@ export class EasyPdfInternal extends EasyPdf {
 
   /** Last line style that was applied to the PDF page */
   private _lastSetLineStyle: LineStyle | null = null;
+
+  /** Current stroke color */
+  private _foreColor: Color = grayscale(0);
+
+  /** Current fill color */
+  private _backColor: Color = grayscale(0);
 
   /** Path state for drawing operations */
   readonly pathState: PathState;
@@ -476,5 +482,25 @@ export class EasyPdfInternal extends EasyPdf {
     this.ensurePageExists();
     shapeUtilsCornerTo(this, offsetX, offsetY, fromSide, bulgeHorizontal, bulgeVertical);
     return this;
+  }
+
+  get foreColor(): Color {
+    return this._foreColor;
+  }
+
+  set foreColor(value: Color) {
+    this.finishLine();
+    this.pdfPage.pushOperators(setStrokingColor(value));
+    this._foreColor = value;
+  }
+
+  get backColor(): Color {
+    return this._backColor;
+  }
+
+  set backColor(value: Color) {
+    this.finishLine();
+    this.pdfPage.pushOperators(setFillingColor(value));
+    this._backColor = value;
   }
 }
