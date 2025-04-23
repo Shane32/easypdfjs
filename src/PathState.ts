@@ -78,29 +78,6 @@ export class PathState {
   private _easyPdfInternal: EasyPdfInternal;
 
   /**
-   * Validates that a coordinate is a finite number
-   * @param coord - The coordinate to validate
-   * @param name - The name of the coordinate for error messaging
-   * @throws {Error} If the coordinate is not a finite number
-   */
-  private validateCoordinate(coord: number, name: string): void {
-    if (!Number.isFinite(coord)) {
-      throw new Error(`Invalid ${name} coordinate: must be a finite number`);
-    }
-  }
-
-  /**
-   * Validates a point's coordinates
-   * @param point - The point to validate
-   * @param name - The name of the point for error messaging
-   * @throws {Error} If either coordinate is not a finite number
-   */
-  private validatePoint(point: { x: number; y: number }, name: string): void {
-    this.validateCoordinate(point.x, `${name}.x`);
-    this.validateCoordinate(point.y, `${name}.y`);
-  }
-
-  /**
    * Creates a new PathState with starting coordinates and EasyPdfInternal reference
    * @param start - The starting point of the path
    * @param easyPdfInternal - The EasyPdfInternal instance for drawing
@@ -274,7 +251,6 @@ export class PathState {
    * @returns The current PathState instance for method chaining
    */
   lineTo(end: { x: number; y: number }): this {
-    this.validatePoint(end, "end");
     this.checkLineStyleChanged();
     this._segments.push({
       type: "line",
@@ -290,8 +266,6 @@ export class PathState {
    * @returns The current PathState instance for method chaining
    */
   quadraticCurveTo(controlPoint: { x: number; y: number }, end: { x: number; y: number }): this {
-    this.validatePoint(controlPoint, "controlPoint");
-    this.validatePoint(end, "end");
     this.checkLineStyleChanged();
     this._segments.push({
       type: "quadratic",
@@ -309,9 +283,6 @@ export class PathState {
    * @returns The current PathState instance for method chaining
    */
   bezierCurveTo(controlPoint1: { x: number; y: number }, controlPoint2: { x: number; y: number }, end: { x: number; y: number }): this {
-    this.validatePoint(controlPoint1, "controlPoint1");
-    this.validatePoint(controlPoint2, "controlPoint2");
-    this.validatePoint(end, "end");
     this.checkLineStyleChanged();
     this._segments.push({
       type: "bezier",
@@ -331,10 +302,6 @@ export class PathState {
    * @returns The current PathState instance for method chaining
    */
   rectangle(x: number, y: number, width: number, height: number): this {
-    this.validateCoordinate(x, "x");
-    this.validateCoordinate(y, "y");
-    this.validateCoordinate(width, "width");
-    this.validateCoordinate(height, "height");
     this.checkLineStyleChanged();
     this._segments.push({
       type: "rectangle",

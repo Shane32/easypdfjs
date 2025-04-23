@@ -55,6 +55,17 @@ export abstract class EasyPdf {
   abstract set margins(value: { readonly left: number; readonly top: number; readonly bottom: number; readonly right: number });
 
   /**
+   * Offsets the margins by the specified values
+   * @param left - Left margin offset
+   * @param top - Top margin offset
+   * @param right - Right margin offset (optional)
+   * @param bottom - Bottom margin offset (optional)
+   * @throws {Error} If no page exists
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract offsetMargins(left: number, top: number, right?: number, bottom?: number): this;
+
+  /**
    * Gets or sets the current drawing position
    * @throws {Error} If no page exists
    */
