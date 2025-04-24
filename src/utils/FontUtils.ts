@@ -6,12 +6,6 @@ import {
   StandardFonts as pdfStandardFonts,
   StandardFontEmbedder,
   PDFOperator,
-  PDFPage,
-} from "pdf-lib";
-import { EasyPdfInternal } from "../EasyPdfInternal";
-import { StandardFonts } from "../StandardFonts";
-import { TextAlignment } from "../TextAlignment";
-import {
   pushGraphicsState,
   popGraphicsState,
   beginText,
@@ -34,6 +28,9 @@ import {
   setFillingColor,
   setStrokingColor,
 } from "pdf-lib";
+import { EasyPdfInternal } from "../EasyPdfInternal";
+import { StandardFonts } from "../StandardFonts";
+import { TextAlignment } from "../TextAlignment";
 type FontEmbedder = CustomFontEmbedder | StandardFontEmbedder;
 
 /**
@@ -62,41 +59,46 @@ function getFont(easyPdf: EasyPdfInternal): { font: PDFFont; bold: boolean; ital
     // Determine the exact font name used in the PDF document based on the family name, bold, and italic properties
     let isBold = font.bold;
     let isItalic = font.italic;
-    let fullFontName: string = "";
-    if (fontName === StandardFonts.Courier || fontName === StandardFonts.Helvetica || fontName === StandardFonts.Times) {
-      if (fontName === StandardFonts.Courier) {
-        fullFontName =
-          isBold && isItalic
-            ? pdfStandardFonts.CourierBoldOblique
-            : isBold
-            ? pdfStandardFonts.CourierBold
-            : isItalic
-            ? pdfStandardFonts.CourierOblique
-            : pdfStandardFonts.Courier;
-      } else if (fontName === StandardFonts.Helvetica) {
-        fullFontName =
-          isBold && isItalic
-            ? pdfStandardFonts.HelveticaBoldOblique
-            : isBold
-            ? pdfStandardFonts.HelveticaBold
-            : isItalic
-            ? pdfStandardFonts.HelveticaOblique
-            : pdfStandardFonts.Helvetica;
-      } else if (fontName === StandardFonts.Times) {
-        fullFontName =
-          isBold && isItalic
-            ? pdfStandardFonts.TimesRomanBoldItalic
-            : isBold
-            ? pdfStandardFonts.TimesRomanBold
-            : isItalic
-            ? pdfStandardFonts.TimesRomanItalic
-            : pdfStandardFonts.TimesRoman;
-      }
+    let fullFontName: pdfStandardFonts;
+    if (fontName === StandardFonts.Courier) {
+      fullFontName =
+        isBold && isItalic
+          ? pdfStandardFonts.CourierBoldOblique
+          : isBold
+          ? pdfStandardFonts.CourierBold
+          : isItalic
+          ? pdfStandardFonts.CourierOblique
+          : pdfStandardFonts.Courier;
       isBold = false;
       isItalic = false;
+    } else if (fontName === StandardFonts.Helvetica) {
+      fullFontName =
+        isBold && isItalic
+          ? pdfStandardFonts.HelveticaBoldOblique
+          : isBold
+          ? pdfStandardFonts.HelveticaBold
+          : isItalic
+          ? pdfStandardFonts.HelveticaOblique
+          : pdfStandardFonts.Helvetica;
+      isBold = false;
+      isItalic = false;
+    } else if (fontName === StandardFonts.Times) {
+      fullFontName =
+        isBold && isItalic
+          ? pdfStandardFonts.TimesRomanBoldItalic
+          : isBold
+          ? pdfStandardFonts.TimesRomanBold
+          : isItalic
+          ? pdfStandardFonts.TimesRomanItalic
+          : pdfStandardFonts.TimesRoman;
+      isBold = false;
+      isItalic = false;
+    } else if (fontName === StandardFonts.Symbol) {
+      fullFontName = pdfStandardFonts.Symbol;
+    } else if (fontName === StandardFonts.ZapfDingbats) {
+      fullFontName = pdfStandardFonts.ZapfDingbats;
     } else {
-      // ZapfDingbats and Symbol
-      fullFontName = fontName;
+      throw new Error(`Font ${fontName} is not a standard font.`);
     }
     for (const pdfFont of docFonts) {
       if (pdfFont.name === fullFontName) {
@@ -105,13 +107,14 @@ function getFont(easyPdf: EasyPdfInternal): { font: PDFFont; bold: boolean; ital
     }
     // If the font is not found, embed it
     return {
-      font: easyPdf.pdfDocument.embedStandardFont(fullFontName as pdfStandardFonts),
+      font: doc.embedStandardFont(fullFontName),
       bold: isBold,
       italic: isItalic,
     };
   } else {
     for (const pdfFont of docFonts) {
-      if (pdfFont.name === fontName) {
+      const embedder = (pdfFont as unknown as { embedder: FontEmbedder }).embedder;
+      if (embedder.customName !== undefined ? embedder.customName === fontName : pdfFont.name === fontName) {
         return { font: pdfFont, bold: false, italic: false };
       }
     }
@@ -426,7 +429,7 @@ function writeLineInternal(
 
   // Draw text
   drawTextRaw(
-    easyPdf.pdfPage,
+    easyPdf,
     text,
     easyPdf.toPoints(x),
     easyPdf.toPoints(y),
@@ -462,7 +465,7 @@ function writeLineInternal(
  * - Text stretching and skewing
  * - Styling options (bold, italic, underline, strikethrough)
  *
- * @param {PDFPage} page - The PDF page where the text will be drawn
+ * @param {EasyPdfInternal} easyPdf - The internal PDF document context
  * @param {string} text - The text content to render
  * @param {number} x - The x-coordinate (in points) where text rendering begins
  * @param {number} y - The y-coordinate (in points) where text rendering begins
@@ -486,7 +489,7 @@ function writeLineInternal(
  * It supports complex text styling beyond standard font rendering.
  */
 export function drawTextRaw(
-  page: PDFPage,
+  easyPdf: EasyPdfInternal,
   text: string,
   x: number,
   y: number,
@@ -521,7 +524,7 @@ export function drawTextRaw(
     beginText(),
 
     // Set font and size
-    setFontAndSize(PDFName.of(font.name), fontSize),
+    setFontAndSize(getPdfNameOfFont(easyPdf, font), fontSize),
 
     // Set text color
     setFillingColor(color),
@@ -559,5 +562,19 @@ export function drawTextRaw(
   operators.push(popGraphicsState());
 
   // Push all operators
-  page.pushOperators(...operators);
+  easyPdf.pdfPage.pushOperators(...operators);
+}
+
+/**
+ * Retrieves the PDF name of a font, either from the existing font keys or by creating a new one.
+ */
+function getPdfNameOfFont(easyPdf: EasyPdfInternal, font: PDFFont): PDFName {
+  for (const pdfFont of easyPdf.fontKeys) {
+    if (pdfFont.font === font) {
+      return pdfFont.key;
+    }
+  }
+  const newKey = easyPdf.pdfPage.node.newFontDictionary(font.name, font.ref);
+  easyPdf.fontKeys.push({ key: newKey, font });
+  return newKey;
 }
