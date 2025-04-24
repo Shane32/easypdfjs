@@ -3,6 +3,8 @@ import { ScaleMode } from "./ScaleMode";
 import { LineStyle } from "./LineStyle";
 import { RectangleOptions } from "./utils/ShapeUtils";
 import { PictureAlignment } from "./PictureAlignment";
+import { Font } from "./Font";
+import { TextAlignment } from "./TextAlignment";
 
 /**
  * EasyPdf: A high-level, user-friendly PDF document creation library
@@ -297,4 +299,72 @@ export abstract class EasyPdf {
    * @returns The current EasyPdf instance for method chaining
    */
   abstract paintPicture(image: PDFImage, options: { dpi?: number; width?: number; height?: number }): this;
+
+  /** Gets or sets the font to use when printing text */
+  abstract get font(): Font;
+  abstract set font(value: Font);
+
+  /** Gets or sets the alignment of printed text */
+  abstract get textAlignment(): TextAlignment;
+  abstract set textAlignment(value: TextAlignment);
+
+  /**
+   * Writes one or more lines of text, with word wrapping if specified.
+   * @param text - The text to write. If null, no text is written but the current position may be affected.
+   * @param maxWidth - Optional maximum width before word wrapping occurs. If not specified, no word wrapping is applied.
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract write(text: string, maxWidth?: number): this;
+
+  /**
+   * Writes one or more lines of text, with word wrapping if specified,
+   * and moves the current position to the next line.
+   * @param text - Optional text to write. If not provided or null, only moves to the next line.
+   * @param maxWidth - Optional maximum width before word wrapping occurs. If not specified, no word wrapping is applied.
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract writeLine(text?: string, maxWidth?: number): this;
+
+  /**
+   * Returns the width of the specified text using the current font.
+   * @param text - The text to measure
+   * @returns The width of the text in the current scale mode
+   */
+  abstract textWidth(text: string): number;
+
+  /**
+   * Returns the height of a single line of text.
+   * @returns The height of a single line of text in the current scale mode
+   */
+  abstract textHeight(): number;
+
+  /**
+   * Returns the distance between the baseline and the top of capital letters.
+   * @returns The cap height in the current scale mode
+   */
+  abstract textCapHeight(): number;
+
+  /**
+   * Returns the distance between the baseline and the top of the highest letters.
+   * @returns The ascent height in the current scale mode
+   */
+  abstract textAscent(): number;
+
+  /**
+   * Returns the distance between the baseline and the bottom of the lowest letters.
+   * @returns The descent height in the current scale mode
+   */
+  abstract textDescent(): number;
+
+  /**
+   * Returns the amount of additional line spacing besides the ascent and descent.
+   * @returns The additional line spacing in the current scale mode
+   */
+  abstract textLeading(): number;
+
+  /**
+   * Returns the amount of additional line spacing between paragraphs.
+   * @returns The paragraph spacing in the current scale mode
+   */
+  abstract textParagraphLeading(): number;
 }

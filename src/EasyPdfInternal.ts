@@ -8,6 +8,19 @@ import { PathState } from "./PathState";
 import { RectangleOptions, drawRectangle, drawEllipse, cornerTo as shapeUtilsCornerTo } from "./utils/ShapeUtils";
 import { PictureAlignment } from "./PictureAlignment";
 import { paintPicture } from "./utils/PictureUtils";
+import { Font } from "./Font";
+import { StandardFonts } from "./StandardFonts";
+import { TextAlignment } from "./TextAlignment";
+import {
+  getTextAscent,
+  getTextCapHeight,
+  getTextDescent,
+  getTextHeight,
+  getTextLeading,
+  getTextParagraphLeading,
+  getTextWidth,
+  writeLines,
+} from "./utils/FontUtils";
 
 /**
  * Internal implementation of EasyPdf
@@ -546,5 +559,85 @@ export class EasyPdfInternal extends EasyPdf {
     this.finishLine();
     paintPicture(this, image, options);
     return this;
+  }
+
+  /** Current font for text operations */
+  private _font: Font = new Font(StandardFonts.Helvetica, 12); // Default font
+
+  /** Gets or sets the font to use when printing text */
+  get font(): Font {
+    return this._font;
+  }
+
+  set font(value: Font) {
+    this._font = value;
+  }
+
+  /** Current text alignment */
+  private _textAlignment: TextAlignment = TextAlignment.LeftTop;
+
+  /** Gets or sets the alignment of printed text */
+  get textAlignment(): TextAlignment {
+    return this._textAlignment;
+  }
+
+  set textAlignment(value: TextAlignment) {
+    this._textAlignment = value;
+  }
+
+  /** Writes one or more lines of text, with word wrapping if specified */
+  write(text: string, maxWidth?: number): this {
+    this.finishLine();
+    if (text) writeLines(this, text, false, maxWidth);
+    return this;
+  }
+
+  /** Writes one or more lines of text, with word wrapping if specified */
+  writeLine(text?: string, maxWidth?: number): this {
+    this.finishLine();
+    writeLines(this, text ?? "", true, maxWidth);
+    return this;
+  }
+
+  /** Returns the width of the specified text */
+  textWidth(text: string): number {
+    this.ensurePageExists();
+    return getTextWidth(this, text);
+  }
+
+  /** Returns the height of a single line of text */
+  textHeight(): number {
+    this.ensurePageExists();
+    return getTextHeight(this);
+  }
+
+  /** Returns the distance between the baseline and the top of capital letters */
+  textCapHeight(): number {
+    this.ensurePageExists();
+    return getTextCapHeight(this);
+  }
+
+  /** Returns the distance between the baseline and the top of the highest letters */
+  textAscent(): number {
+    this.ensurePageExists();
+    return getTextAscent(this);
+  }
+
+  /** Returns the distance between the baseline and the bottom of the lowest letters */
+  textDescent(): number {
+    this.ensurePageExists();
+    return getTextDescent(this);
+  }
+
+  /** Returns the amount of additional line spacing besides the ascent and descent */
+  textLeading(): number {
+    this.ensurePageExists();
+    return getTextLeading(this);
+  }
+
+  /** Returns the amount of additional line spacing between paragraphs */
+  textParagraphLeading(): number {
+    this.ensurePageExists();
+    return getTextParagraphLeading(this);
   }
 }
