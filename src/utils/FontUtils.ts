@@ -6,12 +6,6 @@ import {
   StandardFonts as pdfStandardFonts,
   StandardFontEmbedder,
   PDFOperator,
-  PDFPage,
-} from "pdf-lib";
-import { EasyPdfInternal } from "../EasyPdfInternal";
-import { StandardFonts } from "../StandardFonts";
-import { TextAlignment } from "../TextAlignment";
-import {
   pushGraphicsState,
   popGraphicsState,
   beginText,
@@ -34,6 +28,9 @@ import {
   setFillingColor,
   setStrokingColor,
 } from "pdf-lib";
+import { EasyPdfInternal } from "../EasyPdfInternal";
+import { StandardFonts } from "../StandardFonts";
+import { TextAlignment } from "../TextAlignment";
 type FontEmbedder = CustomFontEmbedder | StandardFontEmbedder;
 
 /**
