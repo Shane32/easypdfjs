@@ -62,41 +62,46 @@ function getFont(easyPdf: EasyPdfInternal): { font: PDFFont; bold: boolean; ital
     // Determine the exact font name used in the PDF document based on the family name, bold, and italic properties
     let isBold = font.bold;
     let isItalic = font.italic;
-    let fullFontName: string = "";
-    if (fontName === StandardFonts.Courier || fontName === StandardFonts.Helvetica || fontName === StandardFonts.Times) {
-      if (fontName === StandardFonts.Courier) {
-        fullFontName =
-          isBold && isItalic
-            ? pdfStandardFonts.CourierBoldOblique
-            : isBold
-            ? pdfStandardFonts.CourierBold
-            : isItalic
-            ? pdfStandardFonts.CourierOblique
-            : pdfStandardFonts.Courier;
-      } else if (fontName === StandardFonts.Helvetica) {
-        fullFontName =
-          isBold && isItalic
-            ? pdfStandardFonts.HelveticaBoldOblique
-            : isBold
-            ? pdfStandardFonts.HelveticaBold
-            : isItalic
-            ? pdfStandardFonts.HelveticaOblique
-            : pdfStandardFonts.Helvetica;
-      } else if (fontName === StandardFonts.Times) {
-        fullFontName =
-          isBold && isItalic
-            ? pdfStandardFonts.TimesRomanBoldItalic
-            : isBold
-            ? pdfStandardFonts.TimesRomanBold
-            : isItalic
-            ? pdfStandardFonts.TimesRomanItalic
-            : pdfStandardFonts.TimesRoman;
-      }
+    let fullFontName: pdfStandardFonts;
+    if (fontName === StandardFonts.Courier) {
+      fullFontName =
+        isBold && isItalic
+          ? pdfStandardFonts.CourierBoldOblique
+          : isBold
+          ? pdfStandardFonts.CourierBold
+          : isItalic
+          ? pdfStandardFonts.CourierOblique
+          : pdfStandardFonts.Courier;
       isBold = false;
       isItalic = false;
+    } else if (fontName === StandardFonts.Helvetica) {
+      fullFontName =
+        isBold && isItalic
+          ? pdfStandardFonts.HelveticaBoldOblique
+          : isBold
+          ? pdfStandardFonts.HelveticaBold
+          : isItalic
+          ? pdfStandardFonts.HelveticaOblique
+          : pdfStandardFonts.Helvetica;
+      isBold = false;
+      isItalic = false;
+    } else if (fontName === StandardFonts.Times) {
+      fullFontName =
+        isBold && isItalic
+          ? pdfStandardFonts.TimesRomanBoldItalic
+          : isBold
+          ? pdfStandardFonts.TimesRomanBold
+          : isItalic
+          ? pdfStandardFonts.TimesRomanItalic
+          : pdfStandardFonts.TimesRoman;
+      isBold = false;
+      isItalic = false;
+    } else if (fontName === StandardFonts.Symbol) {
+      fullFontName = pdfStandardFonts.Symbol;
+    } else if (fontName === StandardFonts.ZapfDingbats) {
+      fullFontName = pdfStandardFonts.ZapfDingbats;
     } else {
-      // ZapfDingbats and Symbol
-      fullFontName = fontName;
+      throw new Error(`Font ${fontName} is not a standard font.`);
     }
     for (const pdfFont of docFonts) {
       if (pdfFont.name === fullFontName) {
@@ -105,13 +110,14 @@ function getFont(easyPdf: EasyPdfInternal): { font: PDFFont; bold: boolean; ital
     }
     // If the font is not found, embed it
     return {
-      font: easyPdf.pdfDocument.embedStandardFont(fullFontName as pdfStandardFonts),
+      font: doc.embedStandardFont(fullFontName),
       bold: isBold,
       italic: isItalic,
     };
   } else {
     for (const pdfFont of docFonts) {
-      if (pdfFont.name === fontName) {
+      const embedder = (pdfFont as unknown as { embedder: FontEmbedder }).embedder;
+      if (embedder.customName !== undefined ? embedder.customName === fontName : pdfFont.name === fontName) {
         return { font: pdfFont, bold: false, italic: false };
       }
     }
