@@ -198,9 +198,9 @@ function getFontDimensions(
   if (embedder instanceof StandardFontEmbedder) {
     const standardFontEmbedder = embedder as StandardFontEmbedder;
     const font = standardFontEmbedder.font;
-    const ascent = ((font.Ascender || (font.Ascender === 0 ? 0 : font.FontBBox[3])) * fontSize) / 1000;
-    const descent = font.Descender || ((font.Descender === 0 ? 0 : font.FontBBox[1]) * fontSize) / 1000;
-    const capHeight = font.CapHeight || ((font.CapHeight === 0 ? 0 : ascent * 0.9) * fontSize) / 1000;
+    const ascent = ((font.Ascender ?? font.FontBBox[3]) * fontSize) / 1000;
+    const descent = ((font.Descender ?? font.FontBBox[1]) * fontSize) / 1000;
+    const capHeight = ((font.CapHeight ?? ascent * 0.9) * fontSize) / 1000;
     const height = ascent - descent;
     return { ascent, descent, capHeight, leading: 0, height };
   } else if (embedder instanceof CustomFontEmbedder) {

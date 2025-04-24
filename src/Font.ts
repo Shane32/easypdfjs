@@ -4,7 +4,9 @@ import { StandardFonts } from "./StandardFonts";
  * Represents a specific font family, size and style.
  */
 export class Font {
+  // set indirectly in the constructor
   private _familyName: string = "";
+  private _embedded: boolean = false;
 
   private static readonly _builtInFonts: string[] = [
     StandardFonts.Times,
@@ -33,22 +35,24 @@ export class Font {
 
     if (builtInFont) {
       this._familyName = builtInFont;
-      this.embedded = false;
+      this._embedded = false;
     } else {
       this._familyName = fontName;
-      this.embedded = true;
+      this._embedded = true;
     }
   }
 
   /**
    * Indicates if this font is embedded or a built-in font.
    */
-  embedded: boolean = false;
+  get embedded(): boolean {
+    return this._embedded;
+  }
 
   /**
    * Gets or sets the em-size of the font measured in points.
    */
-  size: number = 0;
+  size: number;
 
   /**
    * Indicates if the font has a bold style.
