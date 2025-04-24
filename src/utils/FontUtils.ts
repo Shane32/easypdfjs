@@ -432,7 +432,7 @@ function writeLineInternal(
 
   // Draw text
   drawTextRaw(
-    easyPdf.pdfPage,
+    easyPdf,
     text,
     easyPdf.toPoints(x),
     easyPdf.toPoints(y),
@@ -468,7 +468,7 @@ function writeLineInternal(
  * - Text stretching and skewing
  * - Styling options (bold, italic, underline, strikethrough)
  *
- * @param {PDFPage} page - The PDF page where the text will be drawn
+ * @param {EasyPdfInternal} easyPdf - The internal PDF document context
  * @param {string} text - The text content to render
  * @param {number} x - The x-coordinate (in points) where text rendering begins
  * @param {number} y - The y-coordinate (in points) where text rendering begins
@@ -492,7 +492,7 @@ function writeLineInternal(
  * It supports complex text styling beyond standard font rendering.
  */
 export function drawTextRaw(
-  page: PDFPage,
+  easyPdf: EasyPdfInternal,
   text: string,
   x: number,
   y: number,
@@ -527,7 +527,7 @@ export function drawTextRaw(
     beginText(),
 
     // Set font and size
-    setFontAndSize(PDFName.of(font.name), fontSize),
+    setFontAndSize(getPdfNameOfFont(easyPdf, font), fontSize),
 
     // Set text color
     setFillingColor(color),
@@ -565,5 +565,19 @@ export function drawTextRaw(
   operators.push(popGraphicsState());
 
   // Push all operators
-  page.pushOperators(...operators);
+  easyPdf.pdfPage.pushOperators(...operators);
+}
+
+/**
+ * Retrieves the PDF name of a font, either from the existing font keys or by creating a new one.
+ */
+function getPdfNameOfFont(easyPdf: EasyPdfInternal, font: PDFFont): PDFName {
+  for (const pdfFont of easyPdf.fontKeys) {
+    if (pdfFont.font === font) {
+      return pdfFont.key;
+    }
+  }
+  const newKey = easyPdf.pdfPage.node.newFontDictionary(font.name, font.ref);
+  easyPdf.fontKeys.push({ key: newKey, font });
+  return newKey;
 }

@@ -1,4 +1,15 @@
-import { Color, PDFDocument, PDFPage, PDFImage, concatTransformationMatrix, grayscale, setFillingColor, setStrokingColor } from "pdf-lib";
+import {
+  Color,
+  PDFDocument,
+  PDFPage,
+  PDFImage,
+  concatTransformationMatrix,
+  grayscale,
+  setFillingColor,
+  setStrokingColor,
+  PDFName,
+  PDFFont,
+} from "pdf-lib";
 import { EasyPdf } from "./EasyPdf";
 import { ScaleMode } from "./ScaleMode";
 import { cloneLineStyle, LineStyle } from "./LineStyle";
@@ -52,6 +63,9 @@ export class EasyPdfInternal extends EasyPdf {
 
   /** Current picture alignment */
   private _pictureAlignment: PictureAlignment = PictureAlignment.LeftTop;
+
+  /** Dictionary of font names (or aliases) to PDF names */
+  readonly fontKeys: { font: PDFFont; key: PDFName }[] = [];
 
   /** Path state for drawing operations */
   readonly pathState: PathState;
@@ -328,10 +342,7 @@ export class EasyPdfInternal extends EasyPdf {
     this.pageSizeInternal = { width: pageWidth, height: pageHeight };
 
     // Reset position to top-left of new page
-    this.positionInternal = {
-      x: this.marginsInternal.left,
-      y: pageHeight - this.marginsInternal.top,
-    };
+    this.positionInternal = { x: 0, y: 0 };
   }
 
   /**
