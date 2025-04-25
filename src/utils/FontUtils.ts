@@ -27,12 +27,10 @@ import {
   LineJoinStyle,
   setFillingColor,
   setStrokingColor,
-  rgb,
 } from "pdf-lib";
 import { EasyPdfInternal } from "../EasyPdfInternal";
 import { StandardFonts } from "../StandardFonts";
 import { TextAlignment } from "../TextAlignment";
-import { ScaleMode } from "../ScaleMode";
 type FontEmbedder = CustomFontEmbedder | StandardFontEmbedder;
 
 /**
@@ -117,7 +115,7 @@ function getFont(easyPdf: EasyPdfInternal): { font: PDFFont; bold: boolean; ital
     for (const pdfFont of docFonts) {
       const embedder = (pdfFont as unknown as { embedder: FontEmbedder }).embedder;
       if (embedder.customName !== undefined ? embedder.customName === fontName : pdfFont.name === fontName) {
-        return { font: pdfFont, bold: false, italic: false };
+        return { font: pdfFont, bold: font.bold, italic: font.italic };
       }
     }
     throw new Error(`Font ${fontName} not found in the document. Please embed the font before using it.`);
@@ -193,12 +191,22 @@ export function getTextParagraphLeading(easyPdf: EasyPdfInternal): number {
  * @returns {number} .capHeight - Height of capital letters in points
  * @returns {number} .leading - Vertical space between lines in points
  * @returns {number} .height - Total font height (ascent - descent + line gap) in points
+ * @returns {number} .underlinePosition - Position of the underline relative to the baseline in points
+ * @returns {number} .underlineThickness - Thickness of the underline in points
  * @throws {Error} If an unknown or unsupported font embedder type is encountered
  */
 function getFontDimensions(
   font: PDFFont,
   fontSize: number
-): { ascent: number; descent: number; capHeight: number; leading: number; height: number } {
+): {
+  ascent: number;
+  descent: number;
+  capHeight: number;
+  leading: number;
+  height: number;
+  underlinePosition: number;
+  underlineThickness: number;
+} {
   const embedder = (font as unknown as { embedder: FontEmbedder }).embedder;
   if (embedder instanceof StandardFontEmbedder) {
     const standardFontEmbedder = embedder as StandardFontEmbedder;
@@ -206,17 +214,21 @@ function getFontDimensions(
     const ascent = ((font.Ascender ?? font.FontBBox[3]) * fontSize) / 1000;
     const descent = ((font.Descender ?? font.FontBBox[1]) * fontSize) / 1000;
     const capHeight = ((font.CapHeight ?? ascent * 0.9) * fontSize) / 1000;
+    const underlinePosition = ((font.UnderlinePosition ?? -100) * fontSize) / 1000;
+    const underlineThickness = ((font.UnderlineThickness ?? 50) * fontSize) / 1000;
     const height = ascent - descent;
-    return { ascent, descent, capHeight, leading: 0, height };
+    return { ascent, descent, capHeight, leading: 0, height, underlinePosition, underlineThickness };
   } else if (embedder instanceof CustomFontEmbedder) {
     const customFontEmbedder = embedder as CustomFontEmbedder;
     const font = customFontEmbedder.font;
-    const ascent = (font.ascent * fontSize) / 1000;
-    const descent = (font.descent * fontSize) / 1000;
-    const capHeight = (font.capHeight * fontSize) / 1000;
-    const lineGap = (font.lineGap * fontSize) / 1000;
+    const ascent = ((font.ascent * fontSize) / 1000) * embedder.scale;
+    const descent = ((font.descent * fontSize) / 1000) * embedder.scale;
+    const capHeight = ((font.capHeight * fontSize) / 1000) * embedder.scale;
+    const lineGap = ((font.lineGap * fontSize) / 1000) * embedder.scale;
     const height = ascent - descent + lineGap;
-    return { ascent, descent, capHeight, leading: lineGap, height };
+    const underlinePosition = (((font.underlinePosition ?? -100) * fontSize) / 1000) * embedder.scale;
+    const underlineThickness = (((font.underlineThickness ?? 50) * fontSize) / 1000) * embedder.scale;
+    return { ascent, descent, capHeight, leading: lineGap, height, underlinePosition, underlineThickness };
   } else {
     throw new Error("Unknown font embedder type");
   }
@@ -377,7 +389,7 @@ function writeLineInternal(
     // count number of spaces in the text
     const spaceCount = text.split(" ").length - 1;
     if (spaceCount > 0) {
-      wordSpacing = (justifyWidth - width) / spaceCount;
+      wordSpacing = (justifyWidth - width) / spaceCount / font.stretchX;
       width = justifyWidth;
     }
   }
@@ -475,14 +487,14 @@ function writeLineInternal(
  * @param {PDFFont} font - The PDF font to use for rendering
  * @param {number} fontSize - The size of the font in points
  * @param {Color} color - The color used for text rendering
- * @param {number} [wordSpacing=0] - Additional horizontal spacing between words (in points)
- * @param {number} [characterSpacing=0] - Additional horizontal spacing between characters (in points)
- * @param {number} [stretchX=1] - Horizontal scaling factor for the text
- * @param {number} [stretchY=1] - Vertical scaling factor for the text
- * @param {boolean} [bold=false] - Renders text in a bold style if true
- * @param {boolean} [italic=false] - Renders text with an italic skew if true
- * @param {boolean} [underline=false] - Adds an underline to the text if true
- * @param {boolean} [strikethrough=false] - Adds a strikethrough line to the text if true
+ * @param {number} wordSpacing - Additional horizontal spacing between words (in points)
+ * @param {number} characterSpacing - Additional horizontal spacing between characters (in points)
+ * @param {number} stretchX - Horizontal scaling factor for the text
+ * @param {number} stretchY - Vertical scaling factor for the text
+ * @param {boolean} bold - Renders text in a bold style if true
+ * @param {boolean} italic - Renders text with an italic skew if true
+ * @param {boolean} underline - Adds an underline to the text if true
+ * @param {boolean} strikethrough - Adds a strikethrough line to the text if true
  *
  * @throws {Error} If the text is empty or cannot be rendered
  *
@@ -499,14 +511,14 @@ export function drawTextRaw(
   font: PDFFont,
   fontSize: number,
   color: Color,
-  wordSpacing: number = 0,
-  characterSpacing: number = 0,
-  stretchX: number = 1,
-  stretchY: number = 1,
-  bold: boolean = false,
-  italic: boolean = false,
-  underline: boolean = false,
-  strikethrough: boolean = false
+  wordSpacing: number,
+  characterSpacing: number,
+  stretchX: number,
+  stretchY: number,
+  bold: boolean,
+  italic: boolean,
+  underline: boolean,
+  strikethrough: boolean
 ): void {
   if (!text) return;
 
@@ -552,12 +564,19 @@ export function drawTextRaw(
 
   // Underline
   if (underline) {
-    operators.push(rectangle(x, y + fontSize / 4, width, -fontSize / 15), fill());
+    let { underlinePosition, underlineThickness } = getFontDimensions(font, fontSize);
+    underlinePosition *= stretchY;
+    underlineThickness *= stretchY;
+    operators.push(rectangle(x, y - underlinePosition - underlineThickness / 2, width, underlineThickness), fill());
   }
 
   // Strikethrough
   if (strikethrough) {
-    operators.push(rectangle(x, y - fontSize / 3, width, -fontSize / 15), fill());
+    // Position strikethrough at approximately the middle of lowercase letters
+    let { ascent, underlineThickness } = getFontDimensions(font, fontSize);
+    ascent *= stretchY;
+    underlineThickness *= stretchY;
+    operators.push(rectangle(x, y - ascent / 3 - underlineThickness / 2, width, underlineThickness), fill());
   }
 
   // Restore graphics state
