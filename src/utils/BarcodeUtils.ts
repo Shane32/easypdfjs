@@ -11,6 +11,10 @@ import { PictureAlignment } from "../PictureAlignment";
  * @param height The height of the barcode in the current scale mode (optional)
  */
 export function drawBarcode(pdf: EasyPdfInternal, pattern: string | boolean[], width?: number, height?: number): void {
+  if (!pattern || pattern.length === 0) {
+    throw new Error("Pattern cannot be empty");
+  }
+
   // Default height to 0.5 inches if not provided
   const heightInPoints = height !== undefined ? pdf.toPoints(height) : 36; // 0.5 inches = 36 points
 
