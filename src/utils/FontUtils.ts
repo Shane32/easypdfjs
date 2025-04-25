@@ -565,12 +565,6 @@ export function drawTextRaw(
 
   // Push all operators
   easyPdf.pdfPage.pushOperators(...operators);
-
-  const restoreState = easyPdf.saveState();
-  easyPdf.foreColor = rgb(1, 0, 1);
-  easyPdf.scaleMode = ScaleMode.Points;
-  easyPdf.moveTo(x, y - easyPdf.textAscent()).rectangle(width, easyPdf.textHeight());
-  restoreState();
 }
 
 /**
