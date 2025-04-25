@@ -27,10 +27,12 @@ import {
   LineJoinStyle,
   setFillingColor,
   setStrokingColor,
+  rgb,
 } from "pdf-lib";
 import { EasyPdfInternal } from "../EasyPdfInternal";
 import { StandardFonts } from "../StandardFonts";
 import { TextAlignment } from "../TextAlignment";
+import { ScaleMode } from "../ScaleMode";
 type FontEmbedder = CustomFontEmbedder | StandardFontEmbedder;
 
 /**

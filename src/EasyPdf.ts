@@ -367,4 +367,14 @@ export abstract class EasyPdf {
    * @returns The paragraph spacing in the current scale mode
    */
   abstract textParagraphLeading(): number;
+
+  /**
+   * Draws a barcode at the current drawing position
+   * @param pattern - The barcode pattern as a string of 1's and 0's or true/false values
+   * @param width - Optional width of the barcode in the current scale mode
+   * @param height - Optional height of the barcode in the current scale mode (defaults to 0.5 inches)
+   * @throws {Error} If no page exists
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract barcode(pattern: string | boolean[], width?: number, height?: number): this;
 }
