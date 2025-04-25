@@ -1,4 +1,4 @@
-import { EasyPdf } from "../src/index";
+import { createCode128, EasyPdf } from "../src/index";
 import { ScaleMode } from "../src/ScaleMode";
 import { TextAlignment } from "../src/TextAlignment";
 import { StandardFonts } from "../src/StandardFonts";
@@ -8,7 +8,6 @@ import { EmbedFontOptions, rgb } from "pdf-lib";
 import * as fs from "fs";
 import * as path from "path";
 import * as fontkit from "@pdf-lib/fontkit";
-import { Font as StdFont, FontNames, Encodings } from "@pdf-lib/standard-fonts";
 
 // Ensure test-output directory exists
 const TEST_OUTPUT_DIR = path.join(__dirname, "test-output");
@@ -166,6 +165,11 @@ describe("EasyPdf Integration Test", () => {
     pdf.foreColor = rgb(0, 0, 1); // Blue
     pdf.moveTo(5, 2).rectangle(2, 2).offsetTo(2, 2);
     pdf.foreColor = rgb(1, 0, 0); // Red
+
+    // Add barcode
+    pdf.barcode(createCode128("Hello this is a test"), 1, 0.5);
+    pdf.foreColor = rgb(0, 0, 1); // Blue
+    pdf.moveTo(7, 3.75).rectangle(1, 0.5);
 
     // Save PDF
     const pdfBytes = await pdf.save();

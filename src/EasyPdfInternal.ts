@@ -19,6 +19,7 @@ import { PathState } from "./PathState";
 import { RectangleOptions, drawRectangle, drawEllipse, cornerTo as shapeUtilsCornerTo } from "./utils/ShapeUtils";
 import { PictureAlignment } from "./PictureAlignment";
 import { paintPicture } from "./utils/PictureUtils";
+import { drawBarcode } from "./utils/BarcodeUtils";
 import { Font } from "./Font";
 import { StandardFonts } from "./StandardFonts";
 import { TextAlignment } from "./TextAlignment";
@@ -650,5 +651,24 @@ export class EasyPdfInternal extends EasyPdf {
   textParagraphLeading(): number {
     this.ensurePageExists();
     return getTextParagraphLeading(this);
+  }
+
+  /**
+   * Draws a barcode at the current drawing position
+   * @param pattern - The barcode pattern as a string of 1's and 0's or true/false values
+   * @param width - Optional width of the barcode in the current scale mode
+   * @param height - Optional height of the barcode in the current scale mode (defaults to 0.5 inches)
+   * @throws {Error} If no page exists
+   * @returns The current EasyPdf instance for method chaining
+   */
+  barcode(pattern: string | boolean[], width?: number, height?: number): this {
+    if (!Array.from<string | boolean>(pattern).every((v) => v === true || v === false || v === "1" || v === "0")) {
+      throw new Error(
+        "Invalid barcode pattern. Must be a string of 1's and 0's or true/false values; use createCode128() to generate a valid pattern."
+      );
+    }
+    this.finishLine();
+    drawBarcode(this, pattern, width, height);
+    return this;
   }
 }

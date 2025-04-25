@@ -5,3 +5,4 @@ export { LineCapStyle } from "./LineCapStyle";
 export { LineJoinStyle } from "./LineJoinStyle";
 export { LineDashStyle } from "./LineDashStyle";
 export { RectangleOptions } from "./utils/ShapeUtils";
+export { createCode128 } from "./Barcode";

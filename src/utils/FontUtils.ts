@@ -27,10 +27,12 @@ import {
   LineJoinStyle,
   setFillingColor,
   setStrokingColor,
+  rgb,
 } from "pdf-lib";
 import { EasyPdfInternal } from "../EasyPdfInternal";
 import { StandardFonts } from "../StandardFonts";
 import { TextAlignment } from "../TextAlignment";
+import { ScaleMode } from "../ScaleMode";
 type FontEmbedder = CustomFontEmbedder | StandardFontEmbedder;
 
 /**
@@ -563,6 +565,12 @@ export function drawTextRaw(
 
   // Push all operators
   easyPdf.pdfPage.pushOperators(...operators);
+
+  const restoreState = easyPdf.saveState();
+  easyPdf.foreColor = rgb(1, 0, 1);
+  easyPdf.scaleMode = ScaleMode.Points;
+  easyPdf.moveTo(x, y - easyPdf.textAscent()).rectangle(width, easyPdf.textHeight());
+  restoreState();
 }
 
 /**
