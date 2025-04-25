@@ -110,6 +110,11 @@ describe("EasyPdf Integration Test", () => {
     // Times font variations
     pdf.font = new Font(StandardFonts.Times, 10);
     pdf.writeLine("Times Regular");
+    pdf.font.underline = true;
+    pdf.writeLine("Times Underline");
+    pdf.font.strikeout = true;
+    pdf.font.underline = false;
+    pdf.writeLine("Times Strikeout");
     pdf.font = new Font(StandardFonts.Times, 10, true);
     pdf.writeLine("Times Bold");
     pdf.font = new Font(StandardFonts.Times, 10, false, true);
