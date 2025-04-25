@@ -487,14 +487,14 @@ function writeLineInternal(
  * @param {PDFFont} font - The PDF font to use for rendering
  * @param {number} fontSize - The size of the font in points
  * @param {Color} color - The color used for text rendering
- * @param {number} [wordSpacing=0] - Additional horizontal spacing between words (in points)
- * @param {number} [characterSpacing=0] - Additional horizontal spacing between characters (in points)
- * @param {number} [stretchX=1] - Horizontal scaling factor for the text
- * @param {number} [stretchY=1] - Vertical scaling factor for the text
- * @param {boolean} [bold=false] - Renders text in a bold style if true
- * @param {boolean} [italic=false] - Renders text with an italic skew if true
- * @param {boolean} [underline=false] - Adds an underline to the text if true
- * @param {boolean} [strikethrough=false] - Adds a strikethrough line to the text if true
+ * @param {number} [wordSpacing] - Additional horizontal spacing between words (in points)
+ * @param {number} [characterSpacing] - Additional horizontal spacing between characters (in points)
+ * @param {number} [stretchX] - Horizontal scaling factor for the text
+ * @param {number} [stretchY] - Vertical scaling factor for the text
+ * @param {boolean} [bold] - Renders text in a bold style if true
+ * @param {boolean} [italic] - Renders text with an italic skew if true
+ * @param {boolean} [underline] - Adds an underline to the text if true
+ * @param {boolean} [strikethrough] - Adds a strikethrough line to the text if true
  *
  * @throws {Error} If the text is empty or cannot be rendered
  *
