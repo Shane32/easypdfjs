@@ -559,15 +559,10 @@ export function drawTextRaw(
     );
   }
 
-  // Show text with kerning
-  try {
-    operators.push(
-      showTextAdjusted(text, easyPdf.pdfDocument, (font as unknown as { embedder: FontEmbedder }).embedder, fontSize),
-      endText()
-    );
-  } catch (error) {
-    console.log("Error rendering text:", text, error);
-  }
+  // Use the font embedder to show text with kerning
+  const font2 = font as unknown as { embedder: FontEmbedder; modified: boolean };
+  if (font2.modified === false) font2.modified = true;
+  operators.push(showTextAdjusted(text, easyPdf.pdfDocument, font2.embedder), endText());
 
   // Underline
   if (underline) {
