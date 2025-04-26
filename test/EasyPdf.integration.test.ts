@@ -62,9 +62,7 @@ describe("EasyPdf Integration Test", () => {
     const pdf = await EasyPdf.create();
 
     // Embed custom font
-    const fontBytes = fs.readFileSync(
-      path.join(__dirname, "..", "node_modules", "@fontsource", "righteous", "files", "righteous-latin-400-normal.woff")
-    );
+    const fontBytes = fs.readFileSync(path.join(__dirname, "righteous-font", "Righteous-Regular.ttf"));
     const pdfDoc = pdf.pdfDocument;
     pdfDoc.registerFontkit(fontkit);
     await pdfDoc.embedFont(fontBytes, { customName: "Righteous" });
