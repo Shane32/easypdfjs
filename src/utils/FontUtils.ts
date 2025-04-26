@@ -559,10 +559,11 @@ export function drawTextRaw(
     );
   }
 
+  // Mark the font as used (sets font.modified to true)
+  font.encodeText("");
+
   // Use the font embedder to show text with kerning
-  const font2 = font as unknown as { embedder: FontEmbedder; modified: boolean };
-  if (font2.modified === false) font2.modified = true;
-  operators.push(showTextAdjusted(text, easyPdf.pdfDocument, font2.embedder), endText());
+  operators.push(showTextAdjusted(text, easyPdf.pdfDocument, (font as unknown as { embedder: FontEmbedder }).embedder), endText());
 
   // Underline
   if (underline) {
