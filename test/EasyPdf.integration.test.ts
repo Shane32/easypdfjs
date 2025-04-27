@@ -62,10 +62,13 @@ describe("EasyPdf Integration Test", () => {
     const pdf = await EasyPdf.create();
 
     // Embed custom font
-    const fontBytes = fs.readFileSync(path.join(__dirname, "righteous-font", "Righteous-Regular.ttf"));
     const pdfDoc = pdf.pdfDocument;
     pdfDoc.registerFontkit(fontkit);
-    await pdfDoc.embedFont(fontBytes, { customName: "Righteous" });
+
+    const righteousFont = fs.readFileSync(path.join(__dirname, "righteous-font", "Righteous-Regular.ttf"));
+    await pdfDoc.embedFont(righteousFont, { customName: "Righteous" });
+    const robotoFont = fs.readFileSync(path.join(__dirname, "roboto-font", "RobotoSerif.ttf"));
+    await pdfDoc.embedFont(robotoFont, { customName: "Roboto" });
 
     pdf.scaleMode = ScaleMode.Inches;
     pdf.newPage({
@@ -88,9 +91,23 @@ describe("EasyPdf Integration Test", () => {
     pdf.writeLine();
 
     font = new Font(StandardFonts.Helvetica, 12);
+    //font = new Font("Roboto", 12);
     font.lineSpacing = 1.2;
     font.stretchX = 2;
+    font.characterSpacing = 1;
     font.justify = true;
+    font.underline = true;
+    pdf.font = font;
+
+    pdf.writeLine("This is a very long line of text; the quick brown fox jumps over the lazy dog and hello world a few times over", 3);
+
+    //font = new Font(StandardFonts.Helvetica, 12);
+    font = new Font("Roboto", 12);
+    font.lineSpacing = 1.2;
+    font.stretchX = 2;
+    font.characterSpacing = 1;
+    font.justify = true;
+    font.underline = true;
     pdf.font = font;
 
     pdf.writeLine("This is a very long line of text; the quick brown fox jumps over the lazy dog and hello world a few times over", 3);
