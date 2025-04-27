@@ -100,6 +100,7 @@ describe("EasyPdf Integration Test", () => {
     pdf.font = font;
 
     pdf.writeLine("This is a very long line of text; the quick brown fox jumps over the lazy dog and hello world a few times over", 3);
+    pdf.writeLine();
 
     //font = new Font(StandardFonts.Helvetica, 12);
     font = new Font("Roboto", 12);
@@ -111,6 +112,11 @@ describe("EasyPdf Integration Test", () => {
     pdf.font = font;
 
     pdf.writeLine("This is a very long line of text; the quick brown fox jumps over the lazy dog and hello world a few times over", 3);
+
+    pdf.writeLine();
+    pdf.font = new Font("Roboto", 12);
+    pdf.font.underline = true;
+    pdf.writeLine("The quick brown fox jumps over the lazy dog and hello world a few times over");
 
     font = new Font("Righteous", 20);
     font.italic = true;

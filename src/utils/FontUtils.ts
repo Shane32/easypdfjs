@@ -31,6 +31,7 @@ import { showTextAdjusted } from "./FontKerningUtils";
 import { EasyPdfInternal } from "../EasyPdfInternal";
 import { StandardFonts } from "../StandardFonts";
 import { TextAlignment } from "../TextAlignment";
+import { calculateKernedTextWidth } from "../kerning/CustomKerningCalculator";
 type FontEmbedder = CustomFontEmbedder | StandardFontEmbedder;
 
 /**
@@ -122,15 +123,28 @@ function getFont(easyPdf: EasyPdfInternal): { font: PDFFont; bold: boolean; ital
   }
 }
 
+/**
+ * Calculates the width of a given text string in points.
+ * Includes character spacing and kerning adjustments.
+ * Includes character spacing after the last character.
+ */
 export function getTextWidth(easyPdf: EasyPdfInternal, text: string): number {
   if (text.length === 0) {
     return 0;
   }
   const font = easyPdf.font;
   const { font: pdfFont } = getFont(easyPdf);
-  const textWidth = pdfFont.widthOfTextAtSize(text, font.size);
-  const characterSpacing = text.length * font.characterSpacing;
-  return easyPdf.fromPoints((textWidth + characterSpacing) * font.stretchX);
+  if (font.embedded) {
+    // For embedded fonts, use the custom kerning calculator to get the width
+    const calc = calculateKernedTextWidth(text, (pdfFont as unknown as { embedder: CustomFontEmbedder }).embedder);
+    let width = (calc.width / 1000) * font.size;
+    width += calc.glyphCount * font.characterSpacing;
+    return easyPdf.fromPoints(width * font.stretchX);
+  } else {
+    const textWidth = pdfFont.widthOfTextAtSize(text, font.size);
+    const characterSpacing = text.length * font.characterSpacing;
+    return easyPdf.fromPoints((textWidth + characterSpacing) * font.stretchX);
+  }
 }
 
 export function getTextHeight(easyPdf: EasyPdfInternal): number {
@@ -558,8 +572,9 @@ export function drawTextWithWordSpacing(
     const word = words[i];
 
     // Calculate the width of this word
-    let wordWidth = font.widthOfTextAtSize(word + " ", fontSize);
-    const wordCharacterSpacing = (word.length - 1) * characterSpacing;
+    const kerningLength = calculateKernedTextWidth(word + " ", embedder);
+    let wordWidth = (kerningLength.width / 1000) * fontSize;
+    const wordCharacterSpacing = kerningLength.glyphCount * characterSpacing;
     wordWidth = (wordWidth + wordCharacterSpacing) * stretchX;
 
     // Draw the word
@@ -568,7 +583,7 @@ export function drawTextWithWordSpacing(
       word,
       currentX,
       y,
-      wordWidth,
+      wordWidth, // unused since underline and strikethrough are drawn separately
       font,
       fontSize,
       color,
@@ -579,7 +594,7 @@ export function drawTextWithWordSpacing(
       bold,
       italic,
       false,
-      true
+      false
     );
 
     // Move to the next word position

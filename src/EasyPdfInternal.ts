@@ -546,6 +546,9 @@ export class EasyPdfInternal extends EasyPdf {
     const fillColor = this.fillColor;
     const lineStyle = cloneLineStyle(this.lineStyle);
     const margins = this.margins;
+    const textAlignment = this.textAlignment;
+    const pictureAlignment = this.pictureAlignment;
+    const font = this.font;
     return () => {
       this.scaleMode = scaleMode;
       this.position = position;
@@ -553,6 +556,9 @@ export class EasyPdfInternal extends EasyPdf {
       this.fillColor = fillColor;
       this.lineStyle = lineStyle;
       this.margins = margins;
+      this.textAlignment = textAlignment;
+      this.pictureAlignment = pictureAlignment;
+      this.font = font;
     };
   }
 
