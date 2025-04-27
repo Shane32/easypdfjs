@@ -17,7 +17,6 @@ import {
   setTextRenderingMode,
   TextRenderingMode,
   setLineWidth,
-  showText,
   rectangle,
   fill,
   setLineCap,
@@ -28,6 +27,7 @@ import {
   setFillingColor,
   setStrokingColor,
 } from "pdf-lib";
+import { showTextAdjusted } from "./FontKerningUtils";
 import { EasyPdfInternal } from "../EasyPdfInternal";
 import { StandardFonts } from "../StandardFonts";
 import { TextAlignment } from "../TextAlignment";
@@ -559,8 +559,11 @@ export function drawTextRaw(
     );
   }
 
-  // Show text
-  operators.push(showText(font.encodeText(text)), endText());
+  // Mark the font as used (sets font.modified to true)
+  font.encodeText("");
+
+  // Use the font embedder to show text with kerning
+  operators.push(showTextAdjusted(text, easyPdf.pdfDocument, (font as unknown as { embedder: FontEmbedder }).embedder), endText());
 
   // Underline
   if (underline) {
