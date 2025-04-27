@@ -17,13 +17,14 @@ export function calculateKerningPairs(text: string, embedder: CustomFontEmbedder
   }
 
   // Use the font's layout engine to get glyphs with kerning already calculated
-  const { glyphs } = embedder.font.layout(text, embedder.fontFeatures);
+  const layout = embedder.font.layout(text, embedder.fontFeatures);
 
   // Map glyphs to KerningPair objects
-  return glyphs.map((glyph) => ({
+  const ret = layout.glyphs.map((glyph, index) => ({
     code: glyph.id,
-    adjustment: (glyph.advanceWidth * embedder.scale) / 1000,
+    adjustment: (layout.positions[index].xAdvance - glyph.advanceWidth) * embedder.scale,
   }));
+  return ret;
 }
 
 /**
@@ -31,23 +32,23 @@ export function calculateKerningPairs(text: string, embedder: CustomFontEmbedder
  *
  * @param text - The text to calculate width for
  * @param embedder - The CustomFontEmbedder instance
- * @returns The total width in font units (1000ths)
+ * @returns The total width in font units (1000ths) and the number of glyphs
  */
-export function calculateKernedTextWidth(text: string, embedder: CustomFontEmbedder): number {
+export function calculateKernedTextWidth(text: string, embedder: CustomFontEmbedder): { width: number; glyphCount: number } {
   if (!text || text.length === 0) {
-    return 0;
+    return { width: 0, glyphCount: 0 };
   }
 
   // Use the font's layout engine to get glyphs
-  const { glyphs } = embedder.font.layout(text, embedder.fontFeatures);
+  const layout = embedder.font.layout(text, embedder.fontFeatures);
 
   // Calculate the total width by summing the advance widths of all glyphs
   // The layout engine already accounts for kerning
   let totalWidth = 0;
-  for (let idx = 0, len = glyphs.length; idx < len; idx++) {
-    totalWidth += glyphs[idx].advanceWidth * embedder.scale;
+  for (let idx = 0, len = layout.positions.length; idx < len; idx++) {
+    totalWidth += layout.positions[idx].xAdvance * embedder.scale;
   }
 
-  // Return the width in 1000ths of a unit
-  return totalWidth;
+  // Return the width in 1000ths of a unit and the number of glyphs
+  return { width: totalWidth, glyphCount: layout.positions.length };
 }

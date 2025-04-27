@@ -31,6 +31,7 @@ import { showTextAdjusted } from "./FontKerningUtils";
 import { EasyPdfInternal } from "../EasyPdfInternal";
 import { StandardFonts } from "../StandardFonts";
 import { TextAlignment } from "../TextAlignment";
+import { calculateKernedTextWidth } from "../kerning/CustomKerningCalculator";
 type FontEmbedder = CustomFontEmbedder | StandardFontEmbedder;
 
 /**
@@ -122,15 +123,28 @@ function getFont(easyPdf: EasyPdfInternal): { font: PDFFont; bold: boolean; ital
   }
 }
 
+/**
+ * Calculates the width of a given text string in points.
+ * Includes character spacing and kerning adjustments.
+ * Includes character spacing after the last character.
+ */
 export function getTextWidth(easyPdf: EasyPdfInternal, text: string): number {
   if (text.length === 0) {
     return 0;
   }
   const font = easyPdf.font;
   const { font: pdfFont } = getFont(easyPdf);
-  const textWidth = pdfFont.widthOfTextAtSize(text, font.size);
-  const characterSpacing = (text.length - 1) * font.characterSpacing;
-  return easyPdf.fromPoints((textWidth + characterSpacing) * font.stretchX);
+  if (font.embedded) {
+    // For embedded fonts, use the custom kerning calculator to get the width
+    const calc = calculateKernedTextWidth(text, (pdfFont as unknown as { embedder: CustomFontEmbedder }).embedder);
+    let width = (calc.width / 1000) * font.size;
+    width += calc.glyphCount * font.characterSpacing;
+    return easyPdf.fromPoints(width * font.stretchX);
+  } else {
+    const textWidth = pdfFont.widthOfTextAtSize(text, font.size);
+    const characterSpacing = text.length * font.characterSpacing;
+    return easyPdf.fromPoints((textWidth + characterSpacing) * font.stretchX);
+  }
 }
 
 export function getTextHeight(easyPdf: EasyPdfInternal): number {
@@ -311,8 +325,16 @@ function writeWrapped(easyPdf: EasyPdfInternal, text: string, newLine: boolean, 
   const spaceWidth = getTextWidth(easyPdf, " ");
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
-    const wordWidth = getTextWidth(easyPdf, word);
-    const potentialLineWidth = currentLineWidth + (currentLine.length > 0 ? spaceWidth : 0) + wordWidth;
+    let potentialLineWidth: number;
+    let wordWidth: number = 0;
+    if (easyPdf.font.embedded) {
+      wordWidth = getTextWidth(easyPdf, word);
+      potentialLineWidth = currentLineWidth + (currentLine.length > 0 ? spaceWidth : 0) + wordWidth;
+    } else {
+      potentialLineWidth = getTextWidth(easyPdf, currentLine.join(" ") + " " + word);
+    }
+    // remove final character spacing from the potential line width
+    potentialLineWidth -= easyPdf.fromPoints(easyPdf.font.characterSpacing * easyPdf.font.stretchX);
 
     // If adding this word would exceed the width, write the current line
     if (currentLine.length > 0 && potentialLineWidth > width) {
@@ -386,6 +408,7 @@ function writeLineInternal(
   let width: number = getTextWidth(easyPdf, text);
   let wordSpacing: number = 0;
   if (font.justify && justifyWidth !== undefined) {
+    width -= easyPdf.fromPoints(easyPdf.font.characterSpacing * easyPdf.font.stretchX);
     // count number of spaces in the text
     const spaceCount = text.split(" ").length - 1;
     if (spaceCount > 0) {
@@ -442,7 +465,7 @@ function writeLineInternal(
   }
 
   // Draw text
-  drawTextRaw(
+  drawTextWithWordSpacing(
     easyPdf,
     text,
     easyPdf.toPoints(x),
@@ -465,6 +488,140 @@ function writeLineInternal(
     easyPdf.offsetTo(0, getTextHeight(easyPdf)); // does not add paragraph spacing
   } else {
     easyPdf.moveTo(x + width, easyPdf.y); // end at the end of the text
+  }
+}
+
+/**
+ * Draws text with proper word spacing for both standard and custom fonts.
+ *
+ * This function handles the case where wordSpacing is specified and a custom font is used.
+ * For custom fonts, it splits the text by words and renders each word separately with
+ * the appropriate spacing.
+ *
+ * @param easyPdf - The internal PDF document context
+ * @param text - The text to render
+ * @param x - The x-coordinate (in points) where text rendering begins
+ * @param y - The y-coordinate (in points) where text rendering begins
+ * @param width - The total width (in points) allocated for the text
+ * @param font - The PDF font to use for rendering
+ * @param fontSize - The size of the font in points
+ * @param color - The color used for text rendering
+ * @param wordSpacing - Additional horizontal spacing between words (in points)
+ * @param characterSpacing - Additional horizontal spacing between characters (in points)
+ * @param stretchX - Horizontal scaling factor for the text
+ * @param stretchY - Vertical scaling factor for the text
+ * @param bold - Renders text in a bold style if true
+ * @param italic - Renders text with an italic skew if true
+ * @param underline - Adds an underline to the text if true
+ * @param strikethrough - Adds a strikethrough line to the text if true
+ */
+export function drawTextWithWordSpacing(
+  easyPdf: EasyPdfInternal,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  font: PDFFont,
+  fontSize: number,
+  color: Color,
+  wordSpacing: number,
+  characterSpacing: number,
+  stretchX: number,
+  stretchY: number,
+  bold: boolean,
+  italic: boolean,
+  underline: boolean,
+  strikethrough: boolean
+): void {
+  if (!text) return;
+
+  // Check if we need to handle word spacing specially
+  const embedder = (font as unknown as { embedder: FontEmbedder }).embedder;
+  const isCustomFont = embedder instanceof CustomFontEmbedder;
+
+  // If not a custom font or no word spacing or the text is a single word, use the standard method
+  if (!isCustomFont || wordSpacing === 0 || text.indexOf(" ") === -1) {
+    drawTextRaw(
+      easyPdf,
+      text,
+      x,
+      y,
+      width,
+      font,
+      fontSize,
+      color,
+      wordSpacing,
+      characterSpacing,
+      stretchX,
+      stretchY,
+      bold,
+      italic,
+      underline,
+      strikethrough
+    );
+    return;
+  }
+
+  // For custom fonts with word spacing, split by words and render each separately
+  const words = text.split(" ");
+
+  // Calculate the width of each word and render them with proper spacing
+  let currentX = x;
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+
+    // Calculate the width of this word
+    const kerningLength = calculateKernedTextWidth(word + " ", embedder);
+    let wordWidth = (kerningLength.width / 1000) * fontSize;
+    const wordCharacterSpacing = kerningLength.glyphCount * characterSpacing;
+    wordWidth = (wordWidth + wordCharacterSpacing) * stretchX;
+
+    // Draw the word
+    drawTextRaw(
+      easyPdf,
+      word,
+      currentX,
+      y,
+      wordWidth, // unused since underline and strikethrough are drawn separately
+      font,
+      fontSize,
+      color,
+      0,
+      characterSpacing,
+      stretchX,
+      stretchY,
+      bold,
+      italic,
+      false,
+      false
+    );
+
+    // Move to the next word position
+    currentX += wordWidth + wordSpacing * stretchX;
+  }
+
+  // If underline or strikethrough is needed, draw a single line for the entire text
+  if (underline || strikethrough) {
+    const operators: PDFOperator[] = [pushGraphicsState(), setFillingColor(color)];
+
+    if (underline) {
+      let { underlinePosition, underlineThickness } = getFontDimensions(font, fontSize);
+      underlinePosition *= stretchY;
+      underlineThickness *= stretchY;
+      operators.push(rectangle(x, y - underlinePosition - underlineThickness / 2, width, underlineThickness), fill());
+    }
+
+    if (strikethrough) {
+      // Position strikethrough at approximately the middle of lowercase letters
+      let { ascent, underlineThickness } = getFontDimensions(font, fontSize);
+      ascent *= stretchY;
+      underlineThickness *= stretchY;
+      operators.push(rectangle(x, y - ascent / 3 - underlineThickness / 2, width, underlineThickness), fill());
+    }
+
+    operators.push(popGraphicsState());
+    easyPdf.pdfPage.pushOperators(...operators);
   }
 }
 
