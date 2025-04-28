@@ -168,9 +168,7 @@ fs.writeFileSync('document.pdf', pdfBytes);
 | pdfDocument               | Gets the underlying PDF document for advanced usage |
 | pdfPage                   | Gets the underlying PDF page for advanced usage |
 
-Note that drawing coordinates are always specified or returned based on the current
-`scaleMode` setting, and coordinate (0, 0) is the top-left corner of the page/margin.
-Pen widths, font sizes, and paragraph spacing are always specified in points.
+> **Note:** Drawing coordinates are always specified or returned based on the current `scaleMode` setting, and coordinate (0, 0) is the top-left corner of the page/margin. Pen widths, font sizes, and paragraph spacing are always specified in points.
 
 ## Methods
 
