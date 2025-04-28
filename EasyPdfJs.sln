@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Template", "Template.esproj", "{E6FF82CB-CC0F-4027-AEB9-8F9DAB837055}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "EasyPdfJs", "EasyPdfJs.esproj", "{E6FF82CB-CC0F-4027-AEB9-8F9DAB837055}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{02FB74FC-8F91-445C-9399-4EB872A8EC08}"
 	ProjectSection(SolutionItems) = preProject
