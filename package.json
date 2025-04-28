@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@fontsource/righteous": "^5.2.5",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
@@ -74,8 +75,5 @@
   "engines": {
     "node": ">=18",
     "npm": ">=10"
-  },
-  "dependencies": {
-    "@pdf-lib/fontkit": "^1.1.1"
   }
 }
