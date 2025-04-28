@@ -9,4 +9,8 @@ export enum ScaleMode {
   Inches,
   /** PDF points (1/72 of an inch) */
   Points,
+  /** Centimeters */
+  Centimeters,
+  /** Millimeters */
+  Millimeters,
 }

@@ -104,7 +104,7 @@ export class EasyPdfInternal extends EasyPdf {
   constructor(pdf: PDFDocument, options?: { scaleMode?: ScaleMode }) {
     super();
     this._pdf = pdf;
-    this._scaleMode = options?.scaleMode ?? ScaleMode.Points;
+    this._scaleMode = this.validateScaleMode(options?.scaleMode ?? ScaleMode.Points);
     this._lineStyle = new LineStyle();
     this.pathState = new PathState(this);
 
@@ -149,6 +149,10 @@ export class EasyPdfInternal extends EasyPdf {
         return value * 0.01 * 72; // 1/100 of an inch
       case ScaleMode.Inches:
         return value * 72; // 1 inch = 72 points
+      case ScaleMode.Centimeters:
+        return value * (72 / 2.54); // 1 cm = about 28.35 points (72/2.54)
+      case ScaleMode.Millimeters:
+        return value * (72 / 25.4); // 1 mm = about 2.835 points (72/25.4)
       case ScaleMode.Points:
       default:
         return value;
@@ -170,6 +174,10 @@ export class EasyPdfInternal extends EasyPdf {
         return (value / 72) * 100; // points to 1/100 of an inch
       case ScaleMode.Inches:
         return value / 72; // points to inches
+      case ScaleMode.Centimeters:
+        return value / (72 / 2.54); // points to centimeters
+      case ScaleMode.Millimeters:
+        return value / (72 / 25.4); // points to millimeters
       case ScaleMode.Points:
       default:
         return value;
@@ -183,10 +191,15 @@ export class EasyPdfInternal extends EasyPdf {
 
   /** Sets the scale mode with validation */
   set scaleMode(mode: ScaleMode) {
+    this._scaleMode = this.validateScaleMode(mode);
+  }
+
+  /** Validates the scale mode */
+  private validateScaleMode(mode: ScaleMode): ScaleMode {
     if (!Object.values(ScaleMode).includes(mode)) {
       throw new Error(`Invalid scale mode. Must be one of: ${Object.values(ScaleMode).join(", ")}`);
     }
-    this._scaleMode = mode;
+    return mode;
   }
 
   /** Gets the total page size */
