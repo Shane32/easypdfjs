@@ -1,4 +1,4 @@
-# easypdfjs
+# @shane32/easypdfjs
 
 [![npm](https://img.shields.io/npm/v/easypdfjs.svg)](https://www.npmjs.com/package/easypdfjs)
 
@@ -9,7 +9,7 @@ A high-level, user-friendly PDF document creation library for JavaScript and Typ
 1. Install the package:
 
 ```bash
-npm install easypdfjs pdf-lib
+npm install @shane32/easypdfjs pdf-lib
 ```
 
 2. Create a new instance:
@@ -79,22 +79,42 @@ fs.writeFileSync('document.pdf', pdfBytes);
 
 ## Properties
 
+### Document and Page Properties
+
 | Property                  | Description |
 |---------------------------|-------------|
 | scaleMode                 | Gets or sets the scaling mode for the coordinates used by all other commands |
+| pageSize                  | Returns the size of the current page including margins |
+| size                      | Returns the size of the current page excluding margins |
+| margins                   | Gets or sets the current page's margins |
+
+> **Note:** Adjusting margins does not affect content that has already been written to the page. Margin changes only apply to new content added after the adjustment.
+
+### Position Properties
+
+| Property                  | Description |
+|---------------------------|-------------|
+| position                  | Gets or sets the current drawing position |
+| x                         | Gets or sets the current X position |
+| y                         | Gets or sets the current Y position |
+
+### Style Properties
+
+| Property                  | Description |
+|---------------------------|-------------|
+| foreColor                 | Gets or sets the color for printing text, lines and borders |
+| fillColor                 | Gets or sets the color for filling polygons and drawing barcodes |
 | lineStyle                 | Gets or sets the style used to draw lines and borders |
 | lineStyle.capStyle        | Gets or sets the style used to draw the end of a line |
 | lineStyle.joinStyle       | Gets or sets the style used to draw joined line segments and borders |
 | lineStyle.dashStyle       | Gets or sets the dash style used to draw lines and borders |
 | lineStyle.width           | Gets or sets the pen width when drawing lines and borders |
-| pageSize                  | Returns the size of the current page including margins |
-| size                      | Returns the size of the current page excluding margins |
-| margins                   | Gets or sets the current page's margins |
-| position                  | Gets or sets the current drawing position |
-| x                         | Gets or sets the current X position |
-| y                         | Gets or sets the current Y position |
-| foreColor                 | Gets or sets the color for printing text, lines and borders |
-| fillColor                 | Gets or sets the color for filling polygons and drawing barcodes |
+
+### Text and Font Properties
+
+| Property                  | Description |
+|---------------------------|-------------|
+| textAlignment             | Gets or sets the alignment of text in relation to the current position |
 | font                      | Gets or sets the font name, size, and style used when writing text |
 | font.familyName           | Gets or sets the font family name |
 | font.embedded             | Indicates if the font is embedded into the document; false if it is a built-in font |
@@ -110,8 +130,17 @@ fs.writeFileSync('document.pdf', pdfBytes);
 | font.stretchX             | Gets or sets the amount that text is stretched along the X axis |
 | font.stretchY             | Gets or sets the amount that text is stretched along the Y axis |
 | font.characterSpacing     | Gets or sets the amount of space between characters measured in points |
+
+### Image and Barcode Properties
+
+| Property                  | Description |
+|---------------------------|-------------|
 | pictureAlignment          | Gets or sets the alignment of pictures and barcodes in relation to the current position |
-| textAlignment             | Gets or sets the alignment of text in relation to the current position |
+
+### Metadata Properties
+
+| Property                  | Description |
+|---------------------------|-------------|
 | metadata                  | Gets or sets the document metadata |
 | metadata.title            | Gets or sets the document title |
 | metadata.author           | Gets or sets the document author |
@@ -121,6 +150,11 @@ fs.writeFileSync('document.pdf', pdfBytes);
 | metadata.creationDate     | Gets or sets the document creation date |
 | metadata.modificationDate | Gets or sets the document modification date |
 | metadata.producer         | Gets or sets the document producer |
+
+### Advanced Usage Properties
+
+| Property                  | Description |
+|---------------------------|-------------|
 | pdfDocument               | Gets the underlying PDF document for advanced usage |
 | pdfPage                   | Gets the underlying PDF page for advanced usage |
 
