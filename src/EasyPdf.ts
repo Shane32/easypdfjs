@@ -5,6 +5,7 @@ import { RectangleOptions } from "./utils/ShapeUtils";
 import { PictureAlignment } from "./PictureAlignment";
 import { Font } from "./Font";
 import { TextAlignment } from "./TextAlignment";
+import { QRCodeMatrix } from "./utils/BarcodeUtils";
 
 /**
  * EasyPdf: A high-level, user-friendly PDF document creation library
@@ -377,4 +378,61 @@ export abstract class EasyPdf {
    * @returns The current EasyPdf instance for method chaining
    */
   abstract barcode(pattern: string | boolean[], width?: number, height?: number): this;
+
+  /**
+   * Draws a barcode at the current drawing position
+   * @param pattern - The barcode pattern as a string of 1's and 0's or true/false values
+   * @param options - Options for rendering the barcode
+   * @param options.width - Optional width of the barcode in the current scale mode
+   * @param options.height - Optional height of the barcode in the current scale mode (defaults to 0.5 inches)
+   * @param options.invert - Whether to invert the colors of the barcode (default: false)
+   * @param options.quietZone - Whether to include a quiet zone (white space margin) around the barcode (default: true)
+   * @throws {Error} If no page exists
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract barcode(
+    pattern: string | boolean[],
+    options: {
+      width?: number;
+      height?: number;
+      invert?: boolean;
+      quietZone?: boolean;
+    }
+  ): this;
+
+  /**
+   * Draws a QR code at the current drawing position using a pre-encoded matrix
+   *
+   * @param matrix - The pre-encoded QR code matrix, can be:
+   *                 - 2D array of booleans (true = dark module, false = light module)
+   *                 - Object with getModuleCount() and isDark(row, col) methods
+   *                 - Object with a modules property containing a 2D boolean array
+   * @param size - The width/height of the QR code in the current scale mode
+   * @throws {Error} If no page exists or if the matrix format is invalid
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract qrCode(matrix: QRCodeMatrix, size?: number): this;
+
+  /**
+   * Draws a QR code at the current drawing position using a pre-encoded matrix
+   *
+   * @param matrix - The pre-encoded QR code matrix, can be:
+   *                 - 2D array of booleans (true = dark module, false = light module)
+   *                 - Object with getModuleCount() and isDark(row, col) methods
+   *                 - Object with a modules property containing a 2D boolean array
+   * @param options - Options for rendering the QR code
+   * @param options.size - The width/height of the QR code in the current scale mode (default: 0.03" per module)
+   * @param options.quietZone - Whether to include the quiet zone (white space margin) around the QR code (default: true)
+   * @param options.invert - Whether to invert the colors of the QR code (dark becomes light, light becomes dark) (default: false)
+   * @throws {Error} If no page exists or if the matrix format is invalid
+   * @returns The current EasyPdf instance for method chaining
+   */
+  abstract qrCode(
+    matrix: QRCodeMatrix,
+    options: {
+      size?: number;
+      quietZone?: boolean;
+      invert?: boolean;
+    }
+  ): this;
 }

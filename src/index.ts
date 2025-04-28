@@ -6,3 +6,4 @@ export { LineJoinStyle } from "./LineJoinStyle";
 export { LineDashStyle } from "./LineDashStyle";
 export { RectangleOptions } from "./utils/ShapeUtils";
 export { createCode128 } from "./Barcode";
+export { QRCodeMatrix } from "./utils/BarcodeUtils";
