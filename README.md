@@ -1,6 +1,6 @@
 # @shane32/easypdfjs
 
-[![npm](https://img.shields.io/npm/v/easypdfjs.svg)](https://www.npmjs.com/package/easypdfjs)
+[![npm](https://img.shields.io/npm/v/@shane32/easypdfjs.svg)](https://www.npmjs.com/package/@shane32/easypdfjs)
 
 A high-level, user-friendly PDF document creation library for JavaScript and TypeScript, built on top of pdf-lib.
 
