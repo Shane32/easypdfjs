@@ -1,4 +1,4 @@
-import { createCode128, EasyPdf } from "../src/index";
+import { createCode128, EasyPdf, QRCodeMatrix } from "../src/index";
 import { ScaleMode } from "../src/ScaleMode";
 import { TextAlignment } from "../src/TextAlignment";
 import { StandardFonts } from "../src/StandardFonts";
@@ -8,22 +8,13 @@ import { EmbedFontOptions, rgb } from "pdf-lib";
 import * as fs from "fs";
 import * as path from "path";
 import * as fontkit from "@pdf-lib/fontkit";
+import qrcode from "qrcode-generator";
+import * as crypto from "crypto";
 
 // Ensure test-output directory exists
 const TEST_OUTPUT_DIR = path.join(__dirname, "test-output");
 if (!fs.existsSync(TEST_OUTPUT_DIR)) {
   fs.mkdirSync(TEST_OUTPUT_DIR);
-}
-
-// Mock QR Code Generator
-class QRCodeGenerator {
-  CreateQrCode(data: string, eccLevel: any) {
-    return {
-      ModuleMatrix: {
-        Count: 25, // Simulating a 25x25 QR code
-      },
-    };
-  }
 }
 
 const symbolTestPattern = `!	∀	#	∃	%	&	∋	(	)	\u2217	+	,	−	.	/
@@ -129,6 +120,7 @@ describe("EasyPdf Integration Test", () => {
     pdf.writeLine("This is a test");
 
     // Times font variations
+    const textY = pdf.y;
     pdf.font = new Font(StandardFonts.Times, 10);
     pdf.writeLine("Times Regular");
     pdf.font.underline = true;
@@ -163,6 +155,7 @@ describe("EasyPdf Integration Test", () => {
     pdf.font = new Font(StandardFonts.Courier, 10, true, true);
     pdf.writeLine("Courier Bold Italic");
 
+    pdf.moveTo(4, textY);
     // Symbol font
     pdf.font = new Font(StandardFonts.Symbol, 8);
     pdf.writeLine(symbolTestPattern.replace(/\t/g, "  "));
@@ -177,17 +170,21 @@ describe("EasyPdf Integration Test", () => {
     // Color and QR Code
     pdf.fillColor = rgb(1, 0, 0); // Red
 
-    const qrCodeGenerator = new QRCodeGenerator();
-    const qrData = qrCodeGenerator.CreateQrCode("www.zbox.com", null);
+    // Generate QR code with qrcode-generator
+    const qr = qrcode(0, "M"); // Type 0 auto-detects size, 'M' is medium error correction
+    qr.addData("HTTPS://WWW.ZBOX.COM");
+    qr.make();
 
     pdf.moveTo(3, 3);
+    pdf.qrCode(qr);
     pdf.foreColor = rgb(0, 0, 1); // Blue
-    pdf.rectangle(qrData.ModuleMatrix.Count * 0.03, qrData.ModuleMatrix.Count * 0.03);
-    pdf.offsetTo(qrData.ModuleMatrix.Count * 0.03, qrData.ModuleMatrix.Count * 0.03);
+    pdf.rectangle((qr.getModuleCount() + 8) * 0.03, (qr.getModuleCount() + 8) * 0.03);
+    pdf.offsetTo((qr.getModuleCount() + 8) * 0.03, (qr.getModuleCount() + 8) * 0.03);
     pdf.foreColor = rgb(1, 0, 0); // Red
 
     pdf.moveTo(5, 3);
     pdf.pictureAlignment = PictureAlignment.LeftCenter;
+    pdf.qrCode(qr, { size: 2, quietZone: false });
     pdf.foreColor = rgb(0, 0, 1); // Blue
     pdf.moveTo(5, 2).rectangle(2, 2).offsetTo(2, 2);
     pdf.foreColor = rgb(1, 0, 0); // Red
@@ -197,12 +194,28 @@ describe("EasyPdf Integration Test", () => {
     pdf.foreColor = rgb(0, 0, 1); // Blue
     pdf.moveTo(7, 3.75).rectangle(1, 0.5);
 
+    // Set fixed metadata to ensure deterministic PDF generation
+    pdf.metadata.creationDate = new Date("2023-01-01T00:00:00.000Z");
+    pdf.metadata.modificationDate = new Date("2023-01-01T00:00:00.000Z");
+    pdf.metadata.producer = "EasyPdf Test";
+    pdf.metadata.creator = "EasyPdf Test";
+
     // Save PDF
     const pdfBytes = await pdf.save();
 
     // Basic validation
     expect(pdfBytes).toBeDefined();
     expect(pdfBytes.length).toBeGreaterThan(0);
+
+    // Calculate SHA256 hash of the PDF bytes
+    const hash = crypto.createHash("sha256").update(pdfBytes).digest("hex");
+    console.log(`PDF SHA256 hash: ${hash}`);
+
+    // Expected hash value - this should be updated whenever the PDF generation changes intentionally
+    const expectedHash = "140e328c7c963f7f9e34960231feb1a95924632cd8dc5fa915e601baf021fa08";
+
+    // Verify hash matches expected value
+    expect(hash).toBe(expectedHash);
 
     // Save PDF to file
     const outputFilePath = path.join(TEST_OUTPUT_DIR, "Comprehensive_PDF_Generation.pdf");

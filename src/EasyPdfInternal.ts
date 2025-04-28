@@ -19,7 +19,7 @@ import { PathState } from "./PathState";
 import { RectangleOptions, drawRectangle, drawEllipse, cornerTo as shapeUtilsCornerTo } from "./utils/ShapeUtils";
 import { PictureAlignment } from "./PictureAlignment";
 import { paintPicture } from "./utils/PictureUtils";
-import { drawBarcode } from "./utils/BarcodeUtils";
+import { drawBarcode, drawQRCode, QRCodeMatrix } from "./utils/BarcodeUtils";
 import { Font } from "./Font";
 import { StandardFonts } from "./StandardFonts";
 import { TextAlignment } from "./TextAlignment";
@@ -662,19 +662,61 @@ export class EasyPdfInternal extends EasyPdf {
   /**
    * Draws a barcode at the current drawing position
    * @param pattern - The barcode pattern as a string of 1's and 0's or true/false values
-   * @param width - Optional width of the barcode in the current scale mode
+   * @param widthOrOptions - Either the width of the barcode or an options object
    * @param height - Optional height of the barcode in the current scale mode (defaults to 0.5 inches)
-   * @throws {Error} If no page exists
+   * @throws {Error} If no page exists or if the pattern is invalid
    * @returns The current EasyPdf instance for method chaining
    */
-  barcode(pattern: string | boolean[], width?: number, height?: number): this {
+  barcode(
+    pattern: string | boolean[],
+    widthOrOptions?: number | { width?: number; height?: number; invert?: boolean; quietZone?: boolean },
+    height?: number
+  ): this {
     if (!Array.from<string | boolean>(pattern).every((v) => v === true || v === false || v === "1" || v === "0")) {
       throw new Error(
         "Invalid barcode pattern. Must be a string of 1's and 0's or true/false values; use createCode128() to generate a valid pattern."
       );
     }
     this.finishLine();
-    drawBarcode(this, pattern, width, height);
+
+    // Handle both method signatures
+    if (typeof widthOrOptions === "number") {
+      // First signature: barcode(pattern, width?, height?)
+      drawBarcode(this, pattern, { width: widthOrOptions, height });
+    } else {
+      // Second signature: barcode(pattern, options)
+      drawBarcode(this, pattern, widthOrOptions);
+    }
+
+    return this;
+  }
+
+  /**
+   * Draws a QR code at the current drawing position using a pre-encoded matrix
+   *
+   * @param matrix The pre-encoded QR code matrix, can be:
+   *               - 2D array of booleans (true = dark module, false = light module)
+   *               - Object with getModuleCount() and isDark(row, col) methods
+   *               - Object with a modules property containing a 2D boolean array
+   * @param sizeOrOptions The width/height of the QR code in the current scale mode, or options object
+   * @param sizeOrOptions.size The width/height of the QR code in the current scale mode
+   * @param sizeOrOptions.quietZone Whether to include the quiet zone (white space margin) around the QR code (default: true)
+   * @param sizeOrOptions.invert Whether to invert the colors of the QR code (dark becomes light, light becomes dark) (default: false)
+   * @throws {Error} If no page exists or if the matrix format is invalid
+   * @returns The current EasyPdf instance for method chaining
+   */
+  qrCode(matrix: QRCodeMatrix, sizeOrOptions?: number | { size?: number; quietZone?: boolean; invert?: boolean }): this {
+    this.finishLine();
+
+    // Handle both method signatures
+    if (typeof sizeOrOptions === "number") {
+      // First signature: qrCode(matrix, size?)
+      drawQRCode(this, matrix, { size: sizeOrOptions });
+    } else {
+      // Second signature: qrCode(matrix, options)
+      drawQRCode(this, matrix, sizeOrOptions);
+    }
+
     return this;
   }
 }
