@@ -12,6 +12,16 @@ A high-level, user-friendly PDF document creation library for JavaScript and Typ
 npm install @shane32/easypdfjs pdf-lib
 ```
 
+### Using with @cantoo/pdf-lib
+
+You can also use this library with @cantoo/pdf-lib, which is a fork of pdf-lib with additional features and improvements:
+
+```bash
+npm install @shane32/easypdfjs pdf-lib@npm:@cantoo/pdf-lib tslib
+```
+
+The @cantoo/pdf-lib package provides enhanced functionality while maintaining compatibility with the original pdf-lib API. This means you can use all the features of easypdfjs without any code changes, but with the benefits of the improved pdf-lib implementation.
+
 2. Create a new instance:
 
 ```javascript
@@ -28,7 +38,7 @@ const pdf = await EasyPdf.create();
 3. Set the desired scaling mode:
 
 ```javascript
-// Set scale mode to inches, points, or hundredths (default is hundredths)
+// Set scale mode to inches, points, or hundredths (default is points)
 pdf.scaleMode = ScaleMode.Inches;
 ```
 
