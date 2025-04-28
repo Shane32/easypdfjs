@@ -121,6 +121,8 @@ fs.writeFileSync('document.pdf', pdfBytes);
 | metadata.creationDate     | Gets or sets the document creation date |
 | metadata.modificationDate | Gets or sets the document modification date |
 | metadata.producer         | Gets or sets the document producer |
+| pdfDocument               | Gets the underlying PDF document for advanced usage |
+| pdfPage                   | Gets the underlying PDF page for advanced usage |
 
 Note that drawing coordinates are always specified or returned based on the current
 `scaleMode` setting, and coordinate (0, 0) is the top-left corner of the page/margin.
