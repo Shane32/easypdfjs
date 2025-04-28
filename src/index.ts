@@ -7,3 +7,6 @@ export { LineDashStyle } from "./LineDashStyle";
 export { RectangleOptions } from "./utils/ShapeUtils";
 export { createCode128 } from "./Barcode";
 export { QRCodeMatrix } from "./utils/BarcodeUtils";
+export { Font } from "./Font";
+export { TextAlignment } from "./TextAlignment";
+export { PictureAlignment } from "./PictureAlignment";
