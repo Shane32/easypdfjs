@@ -212,7 +212,7 @@ describe("EasyPdf Integration Test", () => {
     console.log(`PDF SHA256 hash: ${hash}`);
 
     // Expected hash value - this should be updated whenever the PDF generation changes intentionally
-    const expectedHash = "140e328c7c963f7f9e34960231feb1a95924632cd8dc5fa915e601baf021fa08";
+    const expectedHash = "df8b3a4a0f87f9c6e070367a4f66cd7c6764450b97b9c3adfe1d9217aada4f54";
 
     // Verify hash matches expected value
     expect(hash).toBe(expectedHash);

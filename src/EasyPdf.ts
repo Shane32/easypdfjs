@@ -165,9 +165,9 @@ export abstract class EasyPdf {
   abstract offsetTo(x: number, y: number): this;
 
   /**
-   * Adds a line segment from the current position to the specified coordinates
-   * @param xOrCoords - Either the x coordinate or an object with x and y coordinates
-   * @param y - The y coordinate (required if first parameter is a number)
+   * Adds a line segment from the current position to the specified offset coordinates
+   * @param xOrCoords - Either the x offset or an object with x and y offsets
+   * @param y - The y offset (required if first parameter is a number)
    * @throws {Error} If no page exists
    * @returns The current EasyPdf instance for method chaining
    */
@@ -175,19 +175,19 @@ export abstract class EasyPdf {
   abstract lineTo(x: number, y: number): this;
 
   /**
-   * Adds a quadratic curve segment from the current position to the specified end point
-   * @param controlPoint - The control point of the quadratic curve
-   * @param end - The end point of the curve
+   * Adds a quadratic curve segment from the current position to the specified offset end point
+   * @param controlPoint - The control point as an offset from the current position
+   * @param end - The end point as an offset from the current position
    * @throws {Error} If no page exists
    * @returns The current EasyPdf instance for method chaining
    */
   abstract quadraticCurveTo(controlPoint: { x: number; y: number }, end: { x: number; y: number }): this;
 
   /**
-   * Adds a cubic Bezier curve segment from the current position to the specified end point
-   * @param controlPoint1 - The first control point of the Bezier curve
-   * @param controlPoint2 - The second control point of the Bezier curve
-   * @param end - The end point of the curve
+   * Adds a cubic Bezier curve segment from the current position to the specified offset end point
+   * @param controlPoint1 - The first control point as an offset from the current position
+   * @param controlPoint2 - The second control point as an offset from the current position
+   * @param end - The end point as an offset from the current position
    * @throws {Error} If no page exists
    * @returns The current EasyPdf instance for method chaining
    */
@@ -213,7 +213,7 @@ export abstract class EasyPdf {
    * @throws {Error} If no page exists
    * @returns The current EasyPdf instance for method chaining
    */
-  abstract finishPolygon(border?: boolean, fill?: boolean, eoFill?: boolean): this;
+  abstract finishPolygon(border: boolean, fill: boolean, eoFill?: boolean): this;
 
   /**
    * Draws a circle at the current drawing position
