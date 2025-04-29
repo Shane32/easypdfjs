@@ -351,6 +351,8 @@ export class EasyPdfInternal extends EasyPdf {
 
     // Create new page
     this.pdfPage = this._pdf.addPage([pageWidth, pageHeight]);
+    this._lastSetLineStyle = null;
+    this.pdfPage.pushOperators(setStrokingColor(this._foreColor), setFillingColor(this._fillColor));
 
     // Set margins (convert to points if needed)
     this.marginsInternal = margins;

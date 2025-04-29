@@ -61,7 +61,7 @@ describe("Line Styles Tests", () => {
     const hash = crypto.createHash("sha256").update(pdfBytes).digest("hex");
 
     // Expected hash value - this should be updated whenever the PDF generation changes intentionally
-    const expectedHash = "842a55d1a5516a160022c610d5752e9be68a5d5cf9e813fe8686da53d927a4aa";
+    const expectedHash = "29ccfa0ba62f2048d60330b92e078f0f0f080e5aad166991bfbd93a69901f503";
 
     // Verify hash matches expected value
     expect(hash).toBe(expectedHash);
@@ -143,7 +143,7 @@ describe("Line Styles Tests", () => {
     console.log(`LineStyles PDF SHA256 hash: ${hash}`);
 
     // Expected hash value - this should be updated whenever the PDF generation changes intentionally
-    const expectedHash = "3f87bc6a20c7cab0df9c86aec4d1eb281d7d108491489c978e165216843abf5f";
+    const expectedHash = "4501deef7852b46e3817d426362f002728e637d11c6e678f1cd5abf08392b89a";
 
     // Verify hash matches expected value
     expect(hash).toBe(expectedHash);
