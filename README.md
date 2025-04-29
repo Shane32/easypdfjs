@@ -216,9 +216,9 @@ pdf.offsetTo(0, 0.5).writeLine("Added a half inch gap between the lines");
 
 | Method           | Description |
 |------------------|-------------|
-| lineTo           | Starts or continues a line or polygon to another specified coordinate |
-| quadraticCurveTo | Adds a quadratic curve segment from the current position to the specified end point |
-| bezierCurveTo    | Adds a cubic Bezier curve segment from the current position to the specified end point |
+| lineTo           | Starts or continues a line or polygon using offset coordinates relative to the current position |
+| quadraticCurveTo | Adds a quadratic curve segment using control point and end point as offsets from the current position |
+| bezierCurveTo    | Adds a cubic Bezier curve segment using control points and end point as offsets from the current position |
 | finishLine       | Ends the line and draws it |
 | finishPolygon    | Ends a polygon and draws it |
 | circle           | Draws a circle at the current drawing position |

@@ -21,11 +21,22 @@ export function drawEllipse(easyPdf: EasyPdfInternal, radiusX: number, radiusY: 
   const oy = radiusY * kappa;
 
   // Use path state to draw the ellipse
-  easyPdf.moveTo(x - radiusX, y);
-  easyPdf.bezierCurveTo({ x: x - radiusX, y: y - oy }, { x: x - ox, y: y - radiusY }, { x: x, y: y - radiusY });
-  easyPdf.bezierCurveTo({ x: x + ox, y: y - radiusY }, { x: x + radiusX, y: y - oy }, { x: x + radiusX, y: y });
-  easyPdf.bezierCurveTo({ x: x + radiusX, y: y + oy }, { x: x + ox, y: y + radiusY }, { x: x, y: y + radiusY });
-  easyPdf.bezierCurveTo({ x: x - ox, y: y + radiusY }, { x: x - radiusX, y: y + oy }, { x: x - radiusX, y: y });
+  // First move to the leftmost point of the ellipse
+  easyPdf.offsetTo(-radiusX, 0);
+
+  // Now use relative coordinates for the bezier curves
+  // Bottom-right quadrant (current position -radiusX, 0)
+  easyPdf.bezierCurveTo({ x: 0, y: -oy }, { x: radiusX - ox, y: -radiusY }, { x: radiusX, y: -radiusY });
+
+  // Bottom-left quadrant (current position 0, -radiusY)
+  easyPdf.bezierCurveTo({ x: ox, y: 0 }, { x: radiusX, y: radiusY - oy }, { x: radiusX, y: radiusY });
+
+  // Top-left quadrant (current position radiusX, 0)
+  easyPdf.bezierCurveTo({ x: 0, y: oy }, { x: -radiusX + ox, y: radiusY }, { x: -radiusX, y: radiusY });
+
+  // Top-right quadrant (current position 0, radiusY)
+  easyPdf.bezierCurveTo({ x: -ox, y: 0 }, { x: -radiusX, y: -radiusY + oy }, { x: -radiusX, y: -radiusY }); // Ending position (current position -radiusX, 0)
+
   easyPdf.finishPolygon(border, fill);
   easyPdf.moveTo(x, y); // Reset position to center of ellipse
 }
@@ -49,9 +60,8 @@ export function drawRectangle(easyPdf: EasyPdfInternal, options: RectangleOption
   // Ensure there is no existing path
   easyPdf.finishLine();
 
-  if (!(options.border || options.fill)) return;
-
-  const { width, height, borderRadius = 0, fill = false, border = true, inset = 0 } = options;
+  const { width, height, borderRadius: borderRadius = 0, fill = false, border = true, inset = 0 } = options;
+  if (!(border || fill)) return;
 
   // If no border radius, use simple rectangle
   if (borderRadius === 0) {
@@ -59,34 +69,44 @@ export function drawRectangle(easyPdf: EasyPdfInternal, options: RectangleOption
     easyPdf.finishPolygon(border, fill);
   } else {
     // Rounded rectangle
-    const x = easyPdf.position.x;
-    const y = easyPdf.position.y;
-    const r = borderRadius;
-    const bulge = DefaultBulge;
+    const pos = easyPdf.position;
 
-    // Start at bottom-left rounded corner
-    easyPdf.moveTo(x + r, y);
+    // Start at top-left corner, offset by the border radius to the right
+    // This positions us at the start of the top edge
+    easyPdf.offsetTo(borderRadius, 0);
 
-    // Top side with right bottom rounded corner
-    easyPdf.lineTo(x + width - r, y);
-    easyPdf.cornerTo(0, r, true, bulge, bulge);
+    // Draw top edge (moving right) and top-right corner
+    // After lineTo, we're at the point where the top-right corner starts
+    easyPdf.lineTo(width - 2 * borderRadius, 0);
+    // Draw the top-right corner (curve starting horizontally, then down)
+    // After cornerTo, we're at the top of the right edge
+    easyPdf.cornerTo(borderRadius, borderRadius, false);
 
-    // Right side with top right rounded corner
-    easyPdf.lineTo(x + width, y + height - r);
-    easyPdf.cornerTo(-r, 0, true, bulge, bulge);
+    // Draw right edge (moving down) and bottom-right corner
+    // After lineTo, we're at the point where the bottom-right corner starts
+    easyPdf.lineTo(0, height - 2 * borderRadius);
+    // Draw the bottom-right corner (curve starting vertically, then to the left)
+    // After cornerTo, we're at the right end of the bottom edge
+    easyPdf.cornerTo(-borderRadius, borderRadius, true);
 
-    // Bottom side with left bottom rounded corner
-    easyPdf.lineTo(x + r, y + height);
-    easyPdf.cornerTo(0, -r, true, bulge, bulge);
+    // Draw bottom edge (moving left) and bottom-left corner
+    // After lineTo, we're at the point where the bottom-left corner starts
+    easyPdf.lineTo(-(width - 2 * borderRadius), 0);
+    // Draw the bottom-left corner (curve starting horizontally, then up)
+    // After cornerTo, we're at the bottom of the left edge
+    easyPdf.cornerTo(-borderRadius, -borderRadius, false);
 
-    // Left side with top left rounded corner
-    easyPdf.lineTo(x, y + r);
-    easyPdf.cornerTo(r, 0, true, bulge, bulge);
+    // Draw left edge (moving up) and top-left corner
+    // After lineTo, we're at the point where the top-left corner starts
+    easyPdf.lineTo(0, -(height - 2 * borderRadius));
+    // Draw the top-left corner (curve starting vertically, then to the right)
+    // After cornerTo, we're back at the starting point
+    easyPdf.cornerTo(borderRadius, -borderRadius, true);
 
     // Close and fill/stroke
     easyPdf.finishPolygon(border, fill);
 
-    easyPdf.moveTo(x, y); // Reset position to top-left corner
+    easyPdf.moveTo(pos); // Reset position to original position
   }
 
   // Draw inner rectangle if inset is specified
@@ -105,13 +125,14 @@ export function drawRectangle(easyPdf: EasyPdfInternal, options: RectangleOption
 }
 
 /**
- * Draws or continues a line as a curve from the current position to the specified offset coordinates
+ * Draws a curved corner from the current position to a point offset by the specified coordinates
  * @param easyPdf - The EasyPdf instance to draw the curve
- * @param offsetX - The X offset coordinate
- * @param offsetY - The Y offset coordinate
- * @param fromSide - Controls if this is an inner or outer curve
- * @param bulgeHorizontal - Controls the amount of horizontal curvature
- * @param bulgeVertical - Controls the amount of vertical curvature
+ * @param offsetX - The X offset from current position to the end point
+ * @param offsetY - The Y offset from current position to the end point
+ * @param fromSide - When false, the curve starts with horizontal tangent (moving along X-axis first).
+ *                   When true, the curve starts with vertical tangent (moving along Y-axis first).
+ * @param bulgeHorizontal - Controls the amount of horizontal curvature (0-1, default is 0.55)
+ * @param bulgeVertical - Controls the amount of vertical curvature (0-1, default is 0.55)
  * @returns The EasyPdf instance for method chaining
  */
 export function cornerTo(
@@ -122,30 +143,34 @@ export function cornerTo(
   bulgeHorizontal: number = DefaultBulge,
   bulgeVertical: number = DefaultBulge
 ): EasyPdfInternal {
-  const currentPos = easyPdf.position;
-  const x2 = currentPos.x + offsetX;
-  const y2 = currentPos.y + offsetY;
-
   if (fromSide) {
-    easyPdf.quadraticCurveTo(
+    easyPdf.bezierCurveTo(
       {
-        x: currentPos.x,
-        y: (y2 - currentPos.y) * bulgeVertical + currentPos.y,
+        x: 0,
+        y: offsetY * bulgeVertical,
       },
       {
-        x: x2 - (x2 - currentPos.x) * bulgeHorizontal,
-        y: y2,
+        x: offsetX * (1 - bulgeHorizontal),
+        y: offsetY,
+      },
+      {
+        x: offsetX,
+        y: offsetY,
       }
     );
   } else {
-    easyPdf.quadraticCurveTo(
+    easyPdf.bezierCurveTo(
       {
-        x: (x2 - currentPos.x) * bulgeHorizontal + currentPos.x,
-        y: currentPos.y,
+        x: offsetX * bulgeHorizontal,
+        y: 0,
       },
       {
-        x: x2,
-        y: y2 - (y2 - currentPos.y) * bulgeVertical,
+        x: offsetX,
+        y: offsetY * (1 - bulgeVertical),
+      },
+      {
+        x: offsetX,
+        y: offsetY,
       }
     );
   }

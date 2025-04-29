@@ -184,6 +184,14 @@ export class EasyPdfInternal extends EasyPdf {
     }
   }
 
+  /** Takes an offset specified in points and returns absolute values in points */
+  calculateOffsetPoints(offsetPoints: { x: number; y: number }): { x: number; y: number } {
+    return {
+      x: offsetPoints.x + this.positionInternal.x,
+      y: offsetPoints.y + this.positionInternal.y,
+    };
+  }
+
   /** Gets the current scale mode */
   get scaleMode(): ScaleMode {
     return this._scaleMode;
@@ -419,39 +427,61 @@ export class EasyPdfInternal extends EasyPdf {
     return this;
   }
 
-  /** Adds a line segment from the current position to the specified coordinates */
+  /**
+   * Adds a line segment from the current position to the specified offset coordinates
+   * @param xOrCoords - Either the x offset or an object with x and y offsets
+   * @param y - The y offset (required if first parameter is a number)
+   */
   lineTo(xOrCoords: number | { x: number; y: number }, y?: number): this {
     this.ensurePageExists();
 
-    const pointCoords = this.toPointsObj(parseCoordinates(xOrCoords, y));
-    this.pathState.lineTo(pointCoords);
-    this.positionInternal = pointCoords;
+    const offsetCoords = this.toPointsObj(parseCoordinates(xOrCoords, y));
+    const absoluteCoords = this.calculateOffsetPoints(offsetCoords);
+    this.pathState.lineTo(absoluteCoords);
+    this.positionInternal = absoluteCoords;
 
     return this;
   }
 
-  /** Adds a quadratic curve segment from the current position to the specified end point */
+  /**
+   * Adds a quadratic curve segment from the current position to the specified offset end point
+   * @param controlPoint - The control point as an offset from the current position
+   * @param end - The end point as an offset from the current position
+   */
   quadraticCurveTo(controlPoint: { x: number; y: number }, end: { x: number; y: number }): this {
     this.ensurePageExists();
 
+    const controlPointInPoints = this.toPointsObj(controlPoint, "controlPoint");
     const endInPoints = this.toPointsObj(end, "end");
-    this.pathState.quadraticCurveTo(this.toPointsObj(controlPoint, "controlPoint"), endInPoints);
-    this.positionInternal = endInPoints;
+
+    const absoluteControlPoint = this.calculateOffsetPoints(controlPointInPoints);
+    const absoluteEnd = this.calculateOffsetPoints(endInPoints);
+
+    this.pathState.quadraticCurveTo(absoluteControlPoint, absoluteEnd);
+    this.positionInternal = absoluteEnd;
 
     return this;
   }
 
-  /** Adds a cubic Bezier curve segment from the current position to the specified end point */
+  /**
+   * Adds a cubic Bezier curve segment from the current position to the specified offset end point
+   * @param controlPoint1 - The first control point as an offset from the current position
+   * @param controlPoint2 - The second control point as an offset from the current position
+   * @param end - The end point as an offset from the current position
+   */
   bezierCurveTo(controlPoint1: { x: number; y: number }, controlPoint2: { x: number; y: number }, end: { x: number; y: number }): this {
     this.ensurePageExists();
 
+    const controlPoint1InPoints = this.toPointsObj(controlPoint1, "controlPoint1");
+    const controlPoint2InPoints = this.toPointsObj(controlPoint2, "controlPoint2");
     const endInPoints = this.toPointsObj(end, "end");
-    this.pathState.bezierCurveTo(
-      this.toPointsObj(controlPoint1, "controlPoint1"),
-      this.toPointsObj(controlPoint2, "controlPoint2"),
-      endInPoints
-    );
-    this.positionInternal = endInPoints;
+
+    const absoluteControlPoint1 = this.calculateOffsetPoints(controlPoint1InPoints);
+    const absoluteControlPoint2 = this.calculateOffsetPoints(controlPoint2InPoints);
+    const absoluteEnd = this.calculateOffsetPoints(endInPoints);
+
+    this.pathState.bezierCurveTo(absoluteControlPoint1, absoluteControlPoint2, absoluteEnd);
+    this.positionInternal = absoluteEnd;
 
     return this;
   }

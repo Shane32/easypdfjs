@@ -3,10 +3,8 @@ import { PDFNumber, PDFOperator, PDFOperatorNames } from "pdf-lib";
 import {
   moveTo as pdfMoveTo,
   lineTo as pdfLineTo,
-  closePath as pdfClosePath,
   stroke as pdfStroke,
   fill as pdfFill,
-  fillAndStroke as pdfFillStroke,
   appendQuadraticCurve as pdfQuadraticCurveTo,
   appendBezierCurve as pdfBezierCurveTo,
 } from "pdf-lib";
@@ -15,6 +13,8 @@ import { LineStyle, cloneLineStyle } from "./LineStyle";
 // Custom PDF operators for even-odd fill rule
 const pdfEoFill = () => PDFOperator.of(PDFOperatorNames.FillEvenOdd);
 const pdfEoFillStroke = () => PDFOperator.of(PDFOperatorNames.CloseFillEvenOddAndStroke);
+const pdfFillStroke = () => PDFOperator.of(PDFOperatorNames.CloseFillNonZeroAndStroke);
+const pdfCloseStroke = () => PDFOperator.of(PDFOperatorNames.CloseAndStroke);
 const pdfAppendRectangle = (x: number, y: number, width: number, height: number) =>
   PDFOperator.of(PDFOperatorNames.AppendRectangle, [PDFNumber.of(x), PDFNumber.of(y), PDFNumber.of(width), PDFNumber.of(height)]);
 
@@ -213,33 +213,27 @@ export class PathState {
     // Generate path operators
     const pathOperators = this.generatePathOperators();
 
-    // Close the path
-    pathOperators.push(pdfClosePath());
-
     // Add appropriate operators based on parameters
     if (border) {
       if (eoFill) {
         // Fill with even-odd rule and stroke
-        pathOperators.push(pdfEoFillStroke());
+        page.pushOperators(...pathOperators, pdfEoFillStroke());
       } else if (fill) {
         // Fill and stroke
-        pathOperators.push(pdfFillStroke());
+        page.pushOperators(...pathOperators, pdfFillStroke());
       } else {
         // Just stroke
-        pathOperators.push(pdfStroke());
+        page.pushOperators(...pathOperators, pdfCloseStroke());
       }
     } else if (eoFill) {
       // Fill with even-odd rule
-      pathOperators.push(pdfEoFill());
+      page.pushOperators(...pathOperators, pdfEoFill());
     } else if (fill) {
       // Fill
-      pathOperators.push(pdfFill());
+      page.pushOperators(...pathOperators, pdfFill());
     } else {
       // No fill or stroke; do nothing
-      return;
     }
-
-    page.pushOperators(...pathOperators);
 
     // Restore the position to the start point
     this._easyPdfInternal.positionInternal = this._start;

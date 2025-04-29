@@ -10,13 +10,6 @@ export class LineDashStyle {
   readonly phase: number;
 
   /**
-   * Creates a uniform on-off pattern.
-   * @param unitsOnOff As measured in multiples of the line width, the on and off distance of the pattern.
-   * @param phase As measured in multiples of the line width, the distance through the pattern when starting a line.
-   */
-  constructor(unitsOnOff: number, phase: number);
-
-  /**
    * Creates a custom on-off pattern.
    * @param unitsOn As measured in multiples of the line width, the on distance of the pattern.
    * @param unitsOff As measured in multiples of the line width, the off distance of the pattern.
@@ -40,9 +33,7 @@ export class LineDashStyle {
       this._array = [arrayOrUnitsOn, unitsOffOrPhase];
       this.phase = phase;
     } else {
-      // unitsOnOff, phase
-      this._array = [arrayOrUnitsOn, arrayOrUnitsOn];
-      this.phase = unitsOffOrPhase;
+      throw new Error("Invalid parameters for LineDashStyle constructor");
     }
   }
 
@@ -75,7 +66,7 @@ export class LineDashStyle {
   /**
    * Represents a dashed line.
    */
-  static readonly Dash = new LineDashStyle(6, 3, 0);
+  static readonly Dash = new LineDashStyle(6, 6, 3);
 
   /**
    * Represents a dotted line.
