@@ -1,4 +1,4 @@
-import { PDFImage } from "pdf-lib";
+import { concatTransformationMatrix, drawObject, PDFImage, popGraphicsState, pushGraphicsState } from "pdf-lib";
 import { EasyPdfInternal } from "../EasyPdfInternal";
 import { PictureAlignment } from "../PictureAlignment";
 
@@ -77,11 +77,15 @@ export function paintPicture(easyPdf: EasyPdfInternal, image: PDFImage, options?
       break;
   }
 
+  // Flip the image along the Y-axis for top-left coordinate system
+  y += imageHeight;
+  imageHeight = -imageHeight;
+
   // Draw the image
-  easyPdf.pdfPage.drawImage(image, {
-    x,
-    y,
-    width: imageWidth,
-    height: imageHeight,
-  });
+  easyPdf.pdfPage.pushOperators(
+    pushGraphicsState(),
+    concatTransformationMatrix(imageWidth, 0, 0, imageHeight, x, y),
+    drawObject(easyPdf.pdfPage.node.newXObject("Image", image.ref)),
+    popGraphicsState()
+  );
 }
