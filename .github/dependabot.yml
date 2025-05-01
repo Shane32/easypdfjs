@@ -16,8 +16,8 @@ updates:
           - "pretty-quick"
           - "eslint-config-prettier"
           - "eslint-plugin-prettier"
-    ignore:
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@typescript-eslint/eslint-plugin"
-        update-types: ["version-update:semver-major"]
+      eslint-packages:
+        patterns:
+          - "eslint"
+          - "@typescript-eslint/eslint-plugin"
+          - "@typescript-eslint/parser"
