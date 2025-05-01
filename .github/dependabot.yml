@@ -9,6 +9,13 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "monthly"
+    groups:
+      prettier-packages:
+        patterns:
+          - "prettier"
+          - "pretty-quick"
+          - "eslint-config-prettier"
+          - "eslint-plugin-prettier"
     ignore:
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
