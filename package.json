@@ -65,7 +65,7 @@
     "pdf-lib": "^1.17.1",
     "prettier": "^3.5.3",
     "pretty-quick": "^4.1.1",
-    "qrcode-generator": "^1.4.4",
+    "qrcode-generator": "^2.0.2",
     "ts-jest": "^29.3.2",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.3",
