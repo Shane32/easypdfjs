@@ -8,6 +8,11 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: Production
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Check github.ref starts with 'refs/tags/'
@@ -23,13 +28,12 @@ jobs:
           ref="${github_ref:10}"
           echo $ref
           echo "ref=$ref" >> $GITHUB_ENV
-      - name: Setup .npmrc file to publish to npm
+      - name: Set up Node.js for npm trusted publishing
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
-          registry-url: 'https://registry.npmjs.org'
-      - name: Install npm@10
-        run: npm i -g npm@10
+          node-version: '24.x'
+      - name: Install npm@11
+        run: npm i -g npm@11
       - name: Install modules
         run: npm ci
       - name: Build
@@ -37,17 +41,17 @@ jobs:
       - name: Configure package name, url, and version
         env:
           github_repo: ${{ github.repository }}
-        run: node tools/updateurl $github_repo $ref
+        run: |
+          node tools/updateurl "$github_repo" "$ref"
+          npm pkg set "repository.url=git+https://github.com/$github_repo.git"
       - name: Clean package.json
         run: node tools/prepare-publish
       - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --registry https://registry.npmjs.org
       - name: Setup .npmrc file to publish to GitHub Packages
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '24.x'
           registry-url: 'https://npm.pkg.github.com'
       - name: Publish to GitHub Packages
         run: npm publish
