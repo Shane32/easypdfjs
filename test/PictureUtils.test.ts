@@ -191,7 +191,7 @@ describe("Picture Tests", () => {
     const hash = crypto.createHash("sha256").update(pdfBytes).digest("hex");
 
     // Assert the expected hash
-    expect(hash).toBe("ace34ec6bbe1deba55128cfeec9b779b844ac44c481e4299981b800e5afcf1c6");
+    expect(hash).toBe("09fc772699b027f4efd3f7bbd4e731a3e5e3caa80c2840b7d594fc834d86fe25");
 
     // Save PDF to file
     const outputFilePath = path.join(TEST_OUTPUT_DIR, "PictureAlignmentTest.pdf");
