@@ -65,7 +65,7 @@ export class EasyPdfInternal extends EasyPdf {
   /** Current picture alignment */
   private _pictureAlignment: PictureAlignment = PictureAlignment.LeftTop;
 
-  /** Dictionary of font names (or aliases) to PDF names */
+  /** Font resource names cached for the current page */
   readonly fontKeys: { font: PDFFont; key: PDFName }[] = [];
 
   /** Path state for drawing operations */
@@ -351,6 +351,8 @@ export class EasyPdfInternal extends EasyPdf {
 
     // Create new page
     this.pdfPage = this._pdf.addPage([pageWidth, pageHeight]);
+    // Font resource names are page-local; embedded fonts remain document-wide.
+    this.fontKeys.length = 0;
     this._lastSetLineStyle = null;
     this.pdfPage.pushOperators(setStrokingColor(this._foreColor), setFillingColor(this._fillColor));
 
@@ -495,7 +497,7 @@ export class EasyPdfInternal extends EasyPdf {
       this.positionInternal.x,
       this.positionInternal.y,
       this.toPoints(width, `${propertyDescription ? propertyDescription + "." : ""}width`),
-      this.toPoints(height, `${propertyDescription ? propertyDescription + "." : ""}height`)
+      this.toPoints(height, `${propertyDescription ? propertyDescription + "." : ""}height`),
     );
     return this;
   }
@@ -715,11 +717,11 @@ export class EasyPdfInternal extends EasyPdf {
   barcode(
     pattern: string | boolean[],
     widthOrOptions?: number | { width?: number; height?: number; invert?: boolean; quietZone?: boolean },
-    height?: number
+    height?: number,
   ): this {
     if (!Array.from<string | boolean>(pattern).every((v) => v === true || v === false || v === "1" || v === "0")) {
       throw new Error(
-        "Invalid barcode pattern. Must be a string of 1's and 0's or true/false values; use createCode128() to generate a valid pattern."
+        "Invalid barcode pattern. Must be a string of 1's and 0's or true/false values; use createCode128() to generate a valid pattern.",
       );
     }
     this.finishLine();
